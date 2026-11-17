@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>پرداخت | زیبا ارکیده</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            background: #100d10;
+            color: white;
+            font-family: Tahoma;
+        }
+
+        .payment-box {
+            max-width: 480px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #211a20;
+            border: 1px solid #e8b94f;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        h1 { color: #e8b94f; }
+
+        .amount {
+            color: #e8b94f;
+            font-size: 27px;
+            font-weight: bold;
+        }
+
+        .info {
+            background: #100d10;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            line-height: 2;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 10px;
+            background: #e8b94f;
+            color: #100d10;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .cancel {
+            background: #49333c;
+            color: white;
+        }
+
+        .notice {
+            color: #ffcf79;
+            font-size: 13px;
+            line-height: 2;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="payment-box">
+
+    <h1>🌸 زیبا ارکیده</h1>
+    <h2>درگاه پرداخت آزمایشی</h2>
+
+    <div class="info">
+        شماره سفارش:
+        <strong>{{ order.id }}</strong>
+        <br>
+
+        وضعیت:
+        {{ order.status }}
+    </div>
+
+    <p>مبلغ قابل پرداخت</p>
+
+    <div class="amount">
+        {{ "{:,}".format(order.amount) }} تومان
+    </div>
+
+    <p class="notice">
+        این صفحه کاملاً آزمایشی است.
+        هیچ پول واقعی دریافت نمی‌شود.
+    </p>
+
+    <form action="{{ url_for('test_payment_success') }}" method="POST">
+        <button type="submit">
+            تأیید پرداخت آزمایشی
+        </button>
+    </form>
+
+    <form action="{{ url_for('test_payment_failed') }}" method="POST">
+        <button type="submit" class="cancel">
+            شبیه‌سازی پرداخت ناموفق
+        </button>
+    </form>
+
+</div>
+
+</body>
+</html>

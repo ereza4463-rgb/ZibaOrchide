@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>پرداخت ناموفق | زیبا ارکیده</title>
+
+    <style>
+        body {
+            background: #100d10;
+            color: white;
+            font-family: Tahoma;
+            text-align: center;
+            padding: 50px 15px;
+        }
+
+        .box {
+            max-width: 500px;
+            margin: auto;
+            padding: 35px;
+            background: #211a20;
+            border: 1px solid #e8b94f;
+            border-radius: 20px;
+        }
+
+        h1 { color: #e8b94f; }
+
+        a {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 13px 25px;
+            background: #e8b94f;
+            color: #100d10;
+            border-radius: 10px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>❌ پرداخت ناموفق بود</h1>
+
+    <h2>زیبا ارکیده 🌸</h2>
+
+    <p>شماره سفارش: {{ order.id }}</p>
+
+    <p>وضعیت سفارش: {{ order.status }}</p>
+
+    <p>نگران نباشید؛ سبد خرید شما حفظ شده است.</p>
+
+    <a href="/cart">بازگشت به سبد خرید</a>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>پرداخت موفق | زیبا ارکیده</title>
+
+    <style>
+        body {
+            background: #100d10;
+            color: white;
+            font-family: Tahoma;
+            text-align: center;
+            padding: 50px 15px;
+        }
+
+        .box {
+            max-width: 500px;
+            margin: auto;
+            padding: 35px;
+            background: #211a20;
+            border: 1px solid #e8b94f;
+            border-radius: 20px;
+        }
+
+        h1 { color: #e8b94f; }
+
+        .amount {
+            color: #e8b94f;
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 13px 25px;
+            background: #e8b94f;
+            color: #100d10;
+            border-radius: 10px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>✅ پرداخت موفق بود!</h1>
+
+    <h2>زیبا ارکیده 🌸</h2>
+
+    <p>شماره سفارش:</p>
+    <h3>{{ order.id }}</h3>
+
+    <p>مبلغ پرداخت آزمایشی:</p>
+
+    <div class="amount">
+        {{ "{:,}".format(order.amount) }} تومان
+    </div>
+
+    <p>وضعیت سفارش: {{ order.status }}</p>
+
+    <p>از خرید شما سپاسگزاریم ❤️</p>
+
+    <a href="/">بازگشت به فروشگاه</a>
+
+</div>
+
+</body>
+</html>

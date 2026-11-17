@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+ <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">   
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>زیبا ارکیده | فروشگاه اینترنتی</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #100d10;
+    color: white;
+    font-family: Tahoma, sans-serif;
+}
+
+header {
+    background: #1b151b;
+    padding: 22px 7%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #b88b52;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.logo {
+    font-size: 27px;
+    color: #e9b6cb;
+    font-weight: bold;
+}
+
+nav {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    text-decoration: none;
+    color: white;
+    transition: .3s;
+}
+
+nav a:hover {
+    color: #e9b6cb;
+}
+
+.hero {
+    min-height: 480px;
+    display: flex;
+    align-items: center;
+    padding: 70px 9%;
+    background:
+    linear-gradient(90deg, #100d10, #100d10d9),
+    url("https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1600");
+    background-size: cover;
+    background-position: center;
+}
+
+.hero h1 {
+    font-size: 43px;
+    color: #e9b6cb;
+    margin-bottom: 25px;
+}
+
+.hero p {
+    color: #ddd;
+    line-height: 2.5;
+    max-width: 550px;
+}
+
+.btn {
+    display: inline-block;
+    background: linear-gradient(120deg, #b88b52, #e9b6cb);
+    color: #171017;
+    padding: 15px 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 25px;
+}
+
+.section {
+    padding: 65px 7%;
+}
+
+.section-title {
+    text-align: center;
+    color: #e9b6cb;
+    font-size: 28px;
+    margin-bottom: 40px;
+}
+
+.products {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 25px;
+}
+
+.product {
+    background: #211a21;
+    border: 1px solid #48303e;
+    border-radius: 15px;
+    padding: 22px;
+    text-align: center;
+    transition: .3s;
+}
+
+.product:hover {
+    transform: translateY(-7px);
+    border-color: #d8ad77;
+}
+
+.product .emoji {
+    font-size: 65px;
+    margin-bottom: 18px;
+}
+
+.product h3 {
+    margin-bottom: 15px;
+}
+
+.price {
+    color: #e9b6cb;
+    margin: 15px 0;
+    font-weight: bold;
+}
+
+.buy {
+    background: #b88b52;
+    color: #171017;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.buy:hover {
+    background: #e9b6cb;
+}
+
+footer {
+    background: #191319;
+    border-top: 1px solid #b88b52;
+    text-align: center;
+    padding: 35px;
+    color: #ccc;
+    line-height: 2.5;
+}
+
+@media(max-width:600px) {
+    .hero h1 {
+        font-size: 30px;
+    }
+
+    header {
+        justify-content: center;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">🌸 زیبا ارکیده</div>
+
+    <nav>
+        <a href="/">صفحه اصلی</a>
+        <a href="#products">محصولات</a>
+        <a href="#about">درباره ما</a>
+<a href="/cart">🛒 سبد خرید ({{ cart_count }})</a>
+    </nav>
+
+</header>
+
+<section class="hero">
+
+    <div>
+        <h1>زیبایی، به سبک زیبا ارکیده</h1>
+
+        <p>
+            به دنیای زیبایی و جذابیت خوش آمدید.
+            بهترین محصولات آرایشی و بهداشتی را
+            با تجربه خریدی متفاوت تهیه کنید.
+        </p>
+
+        <a href="#products" class="btn">
+            مشاهده محصولات
+        </a>
+    </div>
+
+</section>
+
+
+<section class="section" id="products">
+
+    <h2 class="section-title">🌸 محصولات ویژه ما</h2>
+
+    <div class="products">
+
+        {% for product in products %}
+
+        <div class="product">
+
+            <div class="emoji">{{ product.emoji }}</div>
+
+            <h3>{{ product.name }}</h3>
+
+            <p>محصول فروشگاه زیبا ارکیده</p>
+
+            <div class="price">
+                {{ "{:,}".format(product.price) }} تومان
+            </div>
+
+            <form action="/add/{{ product.id }}" method="POST">
+                <button class="buy" type="submit">
+                    افزودن به سبد خرید 🛒
+                </button>
+            </form>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+
+    <h2 class="section-title">🌸 محصولات ویژه ما</h2>
+
+    <div class="products">
+
+        <div class="product">
+            <div class="emoji">💄</div>
+            <h3>رژ لب</h3>
+            <p>محصول نمونه</p>
+            <div class="price">۳۵۰,۰۰۰ تومان</div>
+            <button class="buy">مشاهده محصول</button>
+        </div>
+
+        <div class="product">
+            <div class="emoji">🧴</div>
+            <h3>کرم مراقبتی</h3>
+            <p>محصول نمونه</p>
+            <div class="price">۲۸۰,۰۰۰ تومان</div>
+            <button class="buy">مشاهده محصول</button>
+        </div>
+
+        <div class="product">
+            <div class="emoji">🌷</div>
+            <h3>عطر و ادکلن</h3>
+            <p>محصول نمونه</p>
+            <div class="price">۷۵۰,۰۰۰ تومان</div>
+            <button class="buy">مشاهده محصول</button>
+        </div>
+
+        <div class="product">
+            <div class="emoji">🧼</div>
+            <h3>محصولات مراقبت پوست</h3>
+            <p>محصول نمونه</p>
+            <div class="price">۴۲۰,۰۰۰ تومان</div>
+            <button class="buy">مشاهده محصول</button>
+        </div>
+
+    </div>
+
+</section>
+
+<section id="creators" style="
+    background: #211a20;
+    padding: 35px 20px;
+    margin: 50px auto 25px;
+    border-radius: 18px;
+    text-align: center;
+    border: 1px solid #e8b94f;
+    max-width: 900px;
+">
+    <h2 style="color: #e8b94f;">
+        👑 سازنده این سایت
+    </h2>
+
+    <p style="
+        color: white;
+        font-size: 20px;
+        margin-top: 20px;
+        font-weight: bold;
+    ">
+        RezaEbrahimi
+    </p>
+</section>
+
+<footer id="about">
+
+    <h2>🌸 زیبا ارکیده</h2>
+
+    <p>فروشگاه اینترنتی محصولات آرایشی و بهداشتی</p>
+
+    <p>زیبایی، لطافت و اعتماد</p>
+
+    <p>تمامی حقوق محفوظ است.</p>
+
+</footer>
+
+
+
+    
+
+    </div>
+</section>
+
+<section class="reviews-section container" id="reviews">
+    <h2 class="section-title">⭐ نظرات مشتریان</h2>
+    <p class="reviews-description">
+        تجربه خریداران محصولات زیبا ارکیده
+    </p>
+
+    <div class="reviews-grid">
+
+        <div class="review-card">
+            <div class="review-top">
+                <strong>سارا محمدی</strong>
+                <span>★★★★★</span>
+            </div>
+            <p>رژ لب کیفیت خیلی خوبی داشت و بسته‌بندی هم عالی بود.</p>
+            <small>محصول: رژ لب</small>
+        </div>
+
+        <div class="review-card">
+            <div class="review-top">
+                <strong>نگار احمدی</strong>
+                <span>★★★★★</span>
+            </div>
+            <p>عطر خیلی خوشبویی بود. از خریدم راضی هستم.</p>
+            <small>محصول: عطر و ادکلن</small>
+        </div>
+
+        <div class="review-card">
+            <div class="review-top">
+                <strong>مریم رضایی</strong>
+                <span>★★★★☆</span>
+            </div>
+            <p>محصول خوب بود و سفارش به‌خوبی به دستم رسید.</p>
+            <small>محصول: کرم مراقبتی</small>
+        </div>
+
+    </div>
+</section>
+
+</body>
+</html>
+
