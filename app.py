@@ -113,30 +113,20 @@ def add_to_cart(product_id):
 # صفحه سبد خرید
 @app.route("/cart")
 def cart():
-    cart_items, total = get_cart_data()
-
-    print("CART ITEMS:", cart_items)
-    print("TOTAL:", total)
-
-    return render_template(
-        "cart.html",
-        cart=cart_items,
-        total=total
-    )
-    cart_items, total = get_cart_data()
-
-    return render_template(
-        "cart.html",
-        cart=cart_items,
-        total=total
-    )
-    cart_items, total = get_cart_data()
-
-    return render_template(
-        "cart.html",
-        cart=cart_items,
-        total=total
-    )
+    return """
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <title>تست سبد خرید</title>
+    </head>
+    <body style="background:#100d10;color:#e8bd62;text-align:center;padding:50px;font-family:tahoma">
+        <h1>سبد خرید زیبا ارکیده</h1>
+        <h2>صفحه سبد خرید آنلاین فعال است!</h2>
+        <a href="/" style="color:white">بازگشت به فروشگاه</a>
+    </body>
+    </html>
+    """
 
 
 # افزایش و کاهش تعداد
