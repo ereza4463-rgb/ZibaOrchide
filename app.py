@@ -1,14 +1,17 @@
 
+
+import os
+import uuid
+from datetime import datetime
+
 from flask import Flask, render_template, redirect, url_for, session, request
 
 app = Flask(__name__)
+
 app.secret_key = os.environ.get(
     "SECRET_KEY",
     "local-development-only-key"
 )
-import os
-import uuid
-from datetime import datetime
 
 orders = {}
 
