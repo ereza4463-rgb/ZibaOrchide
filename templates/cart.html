@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>سبد خرید | زیبا ارکیده</title>
+    <style>
+        body {
+            background: #100d10;
+            color: white;
+            font-family: Tahoma, sans-serif;
+            padding: 25px;
+        }
+        .container {
+            max-width: 850px;
+            margin: 40px auto;
+        }
+        h1 { color: #e8bd62; }
+        .item {
+            background: #1d181d;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border: 1px solid #e8bd62;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background: #e8bd62;
+            color: #100d10;
+            text-decoration: none;
+            border-radius: 7px;
+            margin: 5px;
+        }
+        .total {
+            color: #e8bd62;
+            font-size: 22px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>🛒 سبد خرید زیبا ارکیده</h1>
+
+    {% if cart %}
+        {% for item in cart %}
+        <div class="item">
+            <h3>{{ item.emoji }} {{ item.name }}</h3>
+
+            <p>قیمت: {{ "{:,}".format(item.price) }} تومان</p>
+            <p>تعداد: {{ item.quantity }}</p>
+            <p>جمع محصول: {{ "{:,}".format(item.subtotal) }} تومان</p>
+
+            <a class="btn" href="/update-cart/{{ item.id }}/increase">+</a>
+            <a class="btn" href="/update-cart/{{ item.id }}/decrease">-</a>
+            <a class="btn" href="/remove/{{ item.id }}">حذف</a>
+        </div>
+        {% endfor %}
+
+        <h2 class="total">
+            مبلغ نهایی: {{ "{:,}".format(total) }} تومان
+        </h2>
+
+        <a class="btn" href="/checkout">ادامه خرید</a>
+        <a class="btn" href="/clear-cart">خالی کردن سبد</a>
+
+    {% else %}
+        <h3>سبد خرید شما خالی است.</h3>
+    {% endif %}
+
+    <a class="btn" href="/">بازگشت به فروشگاه</a>
+
+</div>
+</body>
+</html>
