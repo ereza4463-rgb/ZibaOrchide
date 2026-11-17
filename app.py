@@ -111,16 +111,9 @@ def add_to_cart(product_id):
 
 
 # صفحه سبد خرید
-# صفحه سبد خرید
 @app.route("/cart")
 def cart():
-    cart_items, total = get_cart_data()
-
-    return render_template(
-        "cart.html",
-        cart=cart_items,
-        total=total
-    )
+    return render_template("cart.html")
 
 
 # افزایش و کاهش تعداد
