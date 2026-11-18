@@ -84,6 +84,57 @@
             border: 1px solid #e9b6cb;
         }
 
+        /* شمارنده بازدیدکنندگان */
+        .visitor-stats {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: #211a21;
+            border: 1px solid #b88b52;
+            border-radius: 10px;
+            padding: 10px 13px;
+            text-align: center;
+            min-width: 145px;
+            transition: .3s;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-3px);
+            border-color: #e9b6cb;
+        }
+
+        .stat-title {
+            display: block;
+            color: #e9b6cb;
+            font-size: 11px;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        .stat-number {
+            color: #e8b94f;
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        .online-number {
+            color: #65df91;
+        }
+
+        .online-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #65df91;
+            border-radius: 50%;
+            margin-left: 5px;
+            box-shadow: 0 0 8px #65df91;
+        }
+
         .hero {
             min-height: 480px;
             display: flex;
@@ -303,6 +354,16 @@
                 font-size: 12px;
                 padding: 9px 11px;
             }
+
+            .visitor-stats {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .stat-box {
+                min-width: 135px;
+                flex: 1;
+            }
         }
     </style>
 </head>
@@ -314,6 +375,28 @@
 
     <nav>
         <a href="/">🏠 صفحه اصلی</a>
+
+        <div class="visitor-stats">
+
+            <div class="stat-box">
+                <span class="stat-title">👁️ مجموع بازدیدکنندگان</span>
+                <span class="stat-number" id="visitor-count">
+                    {{ visitor_count }}
+                </span>
+            </div>
+
+            <div class="stat-box">
+                <span class="stat-title">
+                    <span class="online-dot"></span>
+                    افراد حاضر در سایت
+                </span>
+                <span class="stat-number online-number" id="active-count">
+                    {{ active_count }}
+                </span>
+            </div>
+
+        </div>
+
         <a href="#products">💄 محصولات</a>
         <a href="{{ url_for('about') }}" class="about-btn">🌸 درباره ما</a>
         <a href="/cart">🛒 سبد خرید ({{ cart_count }})</a>
@@ -442,6 +525,33 @@
         </a>
     </p>
 </footer>
+
+<script>
+    async function updateVisitorStats() {
+        try {
+            const response = await fetch("/visitor-heartbeat", {
+                method: "POST"
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+
+            document.getElementById("visitor-count").textContent =
+                Number(data.visitor_count).toLocaleString("fa-IR");
+
+            document.getElementById("active-count").textContent =
+                Number(data.active_count).toLocaleString("fa-IR");
+
+        } catch (error) {
+            console.log("خطا در به‌روزرسانی آمار بازدیدکنندگان");
+        }
+    }
+
+    setInterval(updateVisitorStats, 60000);
+</script>
 
 </body>
 </html>

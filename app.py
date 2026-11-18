@@ -2,6 +2,7 @@
 import os
 import json
 import uuid
+import time
 import sqlite3
 from datetime import datetime
 from functools import wraps
@@ -84,6 +85,15 @@ def init_db():
         )
     """)
 
+    # جدول بازدیدکنندگان
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS visitors (
+            visitor_id TEXT PRIMARY KEY,
+            first_seen REAL NOT NULL,
+            last_seen REAL NOT NULL
+        )
+    """)
+
     cursor.execute("SELECT COUNT(*) FROM products")
     count = cursor.fetchone()[0]
 
@@ -144,17 +154,94 @@ def get_cart_data():
     return cart_items, total
 
 
+# دریافت آمار بازدیدکنندگان
+def get_visitor_stats():
+    now = time.time()
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM visitors")
+    visitor_count = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM visitors
+        WHERE last_seen >= ?
+    """, (now - 300,))
+
+    active_count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return visitor_count, active_count
+
+
 # صفحه اصلی
 @app.route("/")
 def home():
     cart = session.get("cart", {})
     cart_count = sum(cart.values())
 
+    visitor_id = session.get("visitor_id")
+
+    if not visitor_id:
+        visitor_id = uuid.uuid4().hex
+        session["visitor_id"] = visitor_id
+
+    now = time.time()
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO visitors (visitor_id, first_seen, last_seen)
+        VALUES (?, ?, ?)
+        ON CONFLICT(visitor_id)
+        DO UPDATE SET last_seen = excluded.last_seen
+    """, (visitor_id, now, now))
+
+    conn.commit()
+    conn.close()
+
+    visitor_count, active_count = get_visitor_stats()
+
     return render_template(
         "index.html",
         products=get_products(),
-        cart_count=cart_count
+        cart_count=cart_count,
+        visitor_count=visitor_count,
+        active_count=active_count
     )
+
+
+# به‌روزرسانی آمار بازدیدکنندگان
+@app.route("/visitor-heartbeat", methods=["POST"])
+def visitor_heartbeat():
+    visitor_id = session.get("visitor_id")
+
+    if not visitor_id:
+        return {"error": "visitor not found"}, 400
+
+    now = time.time()
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE visitors
+        SET last_seen = ?
+        WHERE visitor_id = ?
+    """, (now, visitor_id))
+
+    conn.commit()
+    conn.close()
+
+    visitor_count, active_count = get_visitor_stats()
+
+    return {
+        "visitor_count": visitor_count,
+        "active_count": active_count
+    }
 
 
 # صفحه درباره ما
