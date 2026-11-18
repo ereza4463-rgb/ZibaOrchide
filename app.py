@@ -60,9 +60,16 @@ app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 
 # آپلود عکس در Supabase
+
 def upload_image_to_supabase(image, filename):
-    if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
-        raise Exception("تنظیمات Supabase Storage کامل نیست.")
+    if not SUPABASE_URL:
+        raise Exception("SUPABASE_URL در تنظیمات Render خالی است.")
+
+    if not SUPABASE_SECRET_KEY:
+        raise Exception("SUPABASE_SECRET_KEY در تنظیمات Render خالی است.")
+
+    if not SUPABASE_BUCKET:
+        raise Exception("SUPABASE_BUCKET در تنظیمات Render خالی است.")
 
     object_path = f"products/{filename}"
 
@@ -75,19 +82,34 @@ def upload_image_to_supabase(image, filename):
 
     url = (
         f"{SUPABASE_URL}/storage/v1/object/"
-        f"{SUPABASE_BUCKET}/{quote(object_path, safe='/')}"
+        f"{quote(SUPABASE_BUCKET, safe='')}/"
+        f"{quote(object_path, safe='/')}"
     )
 
-    response = requests.post(
-        url,
-        data=image.read(),
-        headers=headers,
-        timeout=30
-    )
+    try:
+        image_data = image.read()
+
+        response = requests.post(
+            url,
+            data=image_data,
+            headers=headers,
+            timeout=60
+        )
+
+    except requests.RequestException as error:
+        raise Exception(
+            f"ارتباط با Supabase برقرار نشد: {str(error)}"
+        )
 
     if response.status_code not in (200, 201):
+        error_details = response.text[:1500]
+
         raise Exception(
-            f"آپلود عکس ناموفق بود. کد خطا: {response.status_code}"
+            f"Supabase upload error | "
+            f"Status: {response.status_code} | "
+            f"Response: {error_details} | "
+            f"Bucket: {SUPABASE_BUCKET} | "
+            f"URL: {SUPABASE_URL}"
         )
 
     return (
@@ -613,10 +635,10 @@ def add_product():
         image_url = upload_image_to_supabase(image, filename)
     except Exception as error:
         app.logger.exception("Supabase image upload failed")
-        return (
-            "آپلود عکس ناموفق بود. تنظیمات Supabase و دسترسی Bucket را بررسی کنید.",
-            500
-        )
+      return (
+    f"خطای آپلود عکس: {str(error)}",
+    500
+)
 
     conn = get_db()
     cursor = conn.cursor()
