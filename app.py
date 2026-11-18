@@ -11,6 +11,9 @@ from flask import (
     url_for, session, request
 )
 
+from werkzeug.utils import secure_filename
+
+
 app = Flask(__name__)
 
 app.secret_key = os.environ.get(
@@ -22,14 +25,15 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
 DB_NAME = "ziba_orchid.db"
 
+# تنظیمات آپلود عکس
+UPLOAD_FOLDER = os.path.join("static", "uploads")
 
-# محصولات فروشگاه
-products = [
-    {"id": 1, "name": "رژ لب", "price": 350000, "emoji": "💄"},
-    {"id": 2, "name": "کرم مراقبتی", "price": 280000, "emoji": "🧴"},
-    {"id": 3, "name": "عطر و ادکلن", "price": 750000, "emoji": "🌷"},
-    {"id": 4, "name": "محصولات مراقبت پوست", "price": 420000, "emoji": "🧼"}
-]
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 
 # اتصال به دیتابیس
@@ -70,11 +74,57 @@ def init_db():
         )
     """)
 
+    # جدول محصولات
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            price INTEGER NOT NULL,
+            description TEXT DEFAULT '',
+            image TEXT DEFAULT '',
+            emoji TEXT DEFAULT '📦'
+        )
+    """)
+
+    # ثبت محصولات اولیه فقط در صورت خالی بودن جدول
+    cursor.execute("SELECT COUNT(*) FROM products")
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        default_products = [
+            ("رژ لب", 350000, "محصول فروشگاه زیبا ارکیده", "", "💄"),
+            ("کرم مراقبتی", 280000, "محصول فروشگاه زیبا ارکیده", "", "🧴"),
+            ("عطر و ادکلن", 750000, "محصول فروشگاه زیبا ارکیده", "", "🌷"),
+            ("محصولات مراقبت پوست", 420000, "محصول فروشگاه زیبا ارکیده", "", "🧼")
+        ]
+
+        cursor.executemany("""
+            INSERT INTO products
+            (name, price, description, image, emoji)
+            VALUES (?, ?, ?, ?, ?)
+        """, default_products)
+
     conn.commit()
     conn.close()
 
 
 init_db()
+
+
+# دریافت محصولات از دیتابیس
+def get_products():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM products
+        ORDER BY id DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
 
 
 # محاسبه اطلاعات سبد خرید
@@ -83,7 +133,7 @@ def get_cart_data():
     cart_items = []
     total = 0
 
-    for product in products:
+    for product in get_products():
         quantity = saved_cart.get(str(product["id"]), 0)
 
         if quantity > 0:
@@ -105,7 +155,7 @@ def home():
 
     return render_template(
         "index.html",
-        products=products,
+        products=get_products(),
         cart_count=cart_count
     )
 
@@ -113,7 +163,18 @@ def home():
 # افزودن محصول به سبد خرید
 @app.route("/add/<int:product_id>", methods=["POST"])
 def add_to_cart(product_id):
-    if any(p["id"] == product_id for p in products):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id FROM products WHERE id = ?",
+        (product_id,)
+    )
+
+    product_exists = cursor.fetchone()
+    conn.close()
+
+    if product_exists:
         cart = session.get("cart", {})
         key = str(product_id)
 
@@ -298,8 +359,70 @@ def admin_panel():
 
     return render_template(
         "admin.html",
-        orders=order_list
+        orders=order_list,
+        products=get_products()
     )
+
+
+# ثبت محصول جدید همراه با یک عکس
+@app.route("/admin/products/add", methods=["POST"])
+@admin_required
+def add_product():
+    name = request.form.get("name", "").strip()
+    description = request.form.get("description", "").strip()
+    price_text = request.form.get("price", "").strip()
+
+    image = request.files.get("image")
+
+    if not name or len(name) > 100:
+        return "نام محصول معتبر نیست."
+
+    if not price_text.isdigit() or int(price_text) <= 0:
+        return "قیمت محصول معتبر نیست."
+
+    if not image or not image.filename:
+        return "لطفاً عکس محصول را انتخاب کنید."
+
+    original_name = secure_filename(image.filename)
+
+    if "." not in original_name:
+        return "فرمت عکس معتبر نیست."
+
+    extension = original_name.rsplit(".", 1)[1].lower()
+
+    if extension not in ALLOWED_EXTENSIONS:
+        return "فقط عکس‌های JPG، JPEG، PNG و WEBP مجاز هستند."
+
+    # ساخت نام یکتا برای عکس
+    filename = f"{uuid.uuid4().hex}.{extension}"
+
+    image_path = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        filename
+    )
+
+    image.save(image_path)
+
+    # ذخیره محصول در دیتابیس
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO products
+        (name, price, description, image, emoji)
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        name,
+        int(price_text),
+        description,
+        filename,
+        "📦"
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("admin_panel"))
 
 
 # بستن سفارش
@@ -366,6 +489,12 @@ def support():
             """
 
     return render_template("support.html")
+
+
+# مدیریت خطای حجم زیاد عکس
+@app.errorhandler(413)
+def too_large(error):
+    return "حجم عکس نباید بیشتر از ۵ مگابایت باشد.", 413
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پنل مدیریت | زیبا ارکیده</title>
 
     <style>
@@ -11,153 +11,192 @@
             background: #100d10;
             color: white;
             font-family: Tahoma, sans-serif;
-            padding: 20px;
+            padding: 25px;
+            margin: 0;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        h1 {
+        h1, h2 {
             color: #d6b45d;
         }
 
-        .order {
-            background: #1d181d;
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .box {
+            background: #211c21;
+            padding: 22px;
+            border-radius: 14px;
+            margin-bottom: 25px;
+        }
+
+        input, textarea {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 8px;
             border: 1px solid #d6b45d;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
+            background: #100d10;
+            color: white;
         }
 
-        .order h2 {
+        input[type="file"] {
+            cursor: pointer;
+        }
+
+        button {
+            background: #d6b45d;
+            color: #100d10;
+            padding: 12px 22px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logout {
             color: #d6b45d;
-        }
-
-        .info {
-            line-height: 2.2;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
         }
 
         .product {
-            background: #292229;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 8px 0;
+            border: 1px solid #66552b;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 12px 0;
         }
 
-        .total {
+        .product img {
+            width: 110px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .order {
+            border: 1px solid #66552b;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .closed {
             color: #d6b45d;
-            font-size: 20px;
-        }
-
-        a {
-            display: inline-block;
-            padding: 10px 15px;
-            background: #d6b45d;
-            color: #100d10;
-            text-decoration: none;
-            border-radius: 7px;
-        }
-
-        .empty {
-            text-align: center;
-            margin-top: 80px;
-            color: #aaa;
         }
     </style>
 </head>
 
 <body>
+<div class="container">
 
-<div class="header">
-    <h1>پنل مدیریت زیبا ارکیده</h1>
-    <a href="/admin/logout">خروج از پنل</a>
-</div>
+    <h1>🌸 پنل مدیریت زیبا ارکیده</h1>
 
-<hr>
+    <a class="logout" href="/admin/logout">خروج از پنل مدیریت</a>
 
-<h2>سفارش‌های ثبت‌شده</h2>
+    <!-- ثبت محصول جدید -->
+    <div class="box">
+        <h2>➕ ثبت محصولات جدید</h2>
 
-{% if orders %}
+        <form action="{{ url_for('add_product') }}"
+              method="POST"
+              enctype="multipart/form-data">
 
-    {% for order in orders %}
+            <label>نام محصول</label>
+            <input type="text" name="name" maxlength="100"
+                   placeholder="مثلاً رژ لب" required>
 
-        <div class="order">
+            <label>قیمت محصول (تومان)</label>
+            <input type="number" name="price" min="1"
+                   placeholder="مثلاً 350000" required>
 
-            <h2>سفارش شماره {{ order.order_code }}</h2>
+            <label>توضیحات محصول</label>
+            <textarea name="description" rows="4"
+                      placeholder="توضیحات محصول را بنویسید"></textarea>
 
-            <div class="info">
+            <label>عکس محصول (فقط یک عکس)</label>
+            <input type="file" name="image"
+                   accept=".jpg,.jpeg,.png,.webp"
+                   required>
 
-                <p>
-                    <strong>پیام‌رسان:</strong>
-                    {{ order.platform }}
-                </p>
-
-                <p>
-                    <strong>آیدی مشتری:</strong>
-                    {{ order.customer_id }}
-                </p>
-
-                <p>
-                    <strong>شماره تماس:</strong>
-                    {{ order.phone }}
-                </p>
-
-                <p>
-                    <strong>تاریخ ثبت:</strong>
-                    {{ order.created_at }}
-                </p>
-
-                <p>
-                    <strong>وضعیت:</strong>
-                    {{ order.status }}
-                    {% if order.status != "بسته‌شده" %}
-<form action="{{ url_for('close_order', order_id=order.id) }}" method="POST"
-      onsubmit="return confirm('آیا از بستن این سفارش مطمئنی؟');">
-    <button type="submit" class="admin-btn">
-        بستن سفارش
-    </button>
-</form>
-{% else %}
-<p style="color: #d6b45d;">این سفارش بسته شده است ✅</p>
-{% endif %}
-                </p>
-
-            </div>
-
-            <h3>محصولات سفارش:</h3>
-
-            {% for item in order["items"] %}
-
-                <div class="product">
-                    {{ item.emoji }}
-                    {{ item.name }}
-                    | تعداد: {{ item.quantity }}
-                    | قیمت: {{ "{:,}".format(item.subtotal) }} تومان
-                </div>
-
-            {% endfor %}
-
-            <h3 class="total">
-                مبلغ نهایی:
-                {{ "{:,}".format(order.total) }} تومان
-            </h3>
-
-        </div>
-
-    {% endfor %}
-
-{% else %}
-
-    <div class="empty">
-        <h2>هنوز سفارشی ثبت نشده است.</h2>
+            <button type="submit">ثبت محصول جدید</button>
+        </form>
     </div>
 
-{% endif %}
+    <!-- فهرست محصولات -->
+    <div class="box">
+        <h2>📦 محصولات فروشگاه</h2>
 
+        {% for product in products %}
+        <div class="product">
+
+            {% if product.image %}
+            <img src="{{ url_for('static', filename='uploads/' + product.image) }}"
+                 alt="{{ product.name }}">
+            {% else %}
+            <div style="font-size:40px">{{ product.emoji }}</div>
+            {% endif %}
+
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description }}</p>
+            <p>{{ "{:,}".format(product.price) }} تومان</p>
+
+        </div>
+        {% else %}
+        <p>هنوز محصولی ثبت نشده است.</p>
+        {% endfor %}
+    </div>
+
+    <!-- سفارش‌ها -->
+    <div class="box">
+        <h2>🛒 سفارش‌های مشتریان</h2>
+
+        {% for order in orders %}
+        <div class="order">
+
+            <h3>کد سفارش: {{ order.order_code }}</h3>
+
+            <p>پیام‌رسان: {{ order.platform }}</p>
+            <p>آیدی مشتری: {{ order.customer_id }}</p>
+            <p>شماره تماس: {{ order.phone }}</p>
+            <p>تاریخ: {{ order.created_at }}</p>
+            <p>وضعیت: {{ order.status }}</p>
+
+            <h4>محصولات سفارش:</h4>
+
+            {% for item in order["items"] %}
+            <p>
+                {{ item.name }}
+                - تعداد: {{ item.quantity }}
+                - مبلغ: {{ "{:,}".format(item.subtotal) }} تومان
+            </p>
+            {% endfor %}
+
+            <h3>
+                مبلغ کل: {{ "{:,}".format(order.total) }} تومان
+            </h3>
+
+            {% if order.status != "بسته‌شده" %}
+            <form action="{{ url_for('close_order', order_id=order.id) }}"
+                  method="POST"
+                  onsubmit="return confirm('آیا از بستن سفارش مطمئنی؟');">
+
+                <button type="submit">بستن سفارش</button>
+            </form>
+            {% else %}
+            <p class="closed">این سفارش بسته شده است ✅</p>
+            {% endif %}
+
+        </div>
+        {% else %}
+        <p>هنوز سفارشی ثبت نشده است.</p>
+        {% endfor %}
+    </div>
+
+</div>
 </body>
 </html>
