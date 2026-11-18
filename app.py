@@ -1129,7 +1129,23 @@ def close_order(order_id):
 # -----------------------------
 # خروج مدیر
 # -----------------------------
+# -----------------------------
+# بازنشانی آمار بازدیدکنندگان
+# -----------------------------
 
+@app.route("/admin/reset-visitors", methods=["POST"])
+@admin_required
+def reset_visitors():
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    execute(cursor, "DELETE FROM visitors")
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("admin_panel"))
 @app.route("/admin/logout")
 @admin_required
 def admin_logout():

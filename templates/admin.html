@@ -108,6 +108,20 @@
             background: #e74c5e;
         }
 
+        .reset-btn {
+            background: #c0394b;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background: #e74c5e;
+        }
+
+        .reset-description {
+            color: #ccc;
+            line-height: 2;
+        }
+
         @media(max-width: 600px) {
             body {
                 padding: 12px;
@@ -130,6 +144,25 @@
     <h1>🌸 پنل مدیریت زیبا ارکیده</h1>
 
     <a class="logout" href="/admin/logout">خروج از پنل مدیریت</a>
+
+    <!-- بازنشانی آمار بازدیدکنندگان -->
+    <div class="box">
+        <h2>📊 مدیریت آمار بازدیدکنندگان</h2>
+
+        <p class="reset-description">
+            با استفاده از این دکمه، تعداد کل بازدیدکنندگان از صفر شروع می‌شود.
+            محصولات و سفارش‌های فروشگاه حذف نخواهند شد.
+        </p>
+
+        <form action="{{ url_for('reset_visitors') }}"
+              method="POST"
+              onsubmit="return confirm('آیا مطمئنی؟ تمام آمار بازدیدکنندگان پاک می‌شود!');">
+
+            <button type="submit" class="reset-btn">
+                🔄 بازنشانی آمار بازدیدکنندگان
+            </button>
+        </form>
+    </div>
 
     <!-- ثبت محصول جدید -->
     <div class="box">
