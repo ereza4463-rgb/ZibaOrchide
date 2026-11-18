@@ -41,39 +41,47 @@
 
         nav {
             display: flex;
-            gap: 25px;
+            gap: 12px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         nav a {
             text-decoration: none;
-            color: white;
+            color: #f5dce8;
             transition: .3s;
+            font-family: Tahoma, sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 11px 15px;
+            border-radius: 10px;
+            background: #2a2029;
+            border: 1px solid #48303e;
+            display: inline-block;
         }
 
         nav a:hover {
-            color: #e9b6cb;
+            color: #100d10;
+            background: #e9b6cb;
+            border-color: #e9b6cb;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px #e9b6cb44;
         }
 
         .admin-btn {
-            display: inline-block;
             background: #d6b45d;
             color: #100d10;
-            padding: 10px 18px;
-            border-radius: 8px;
-            text-decoration: none;
-            margin: 5px;
+            border: 1px solid #d6b45d;
+        }
+
+        .admin-btn:hover {
+            background: #f0d48b;
         }
 
         .about-btn {
-            display: inline-block;
             background: #e9b6cb;
             color: #100d10;
-            padding: 10px 18px;
-            border-radius: 8px;
-            text-decoration: none;
-            margin: 5px;
-            font-weight: bold;
+            border: 1px solid #e9b6cb;
         }
 
         .hero {
@@ -109,6 +117,12 @@
             text-decoration: none;
             font-weight: bold;
             margin-top: 25px;
+            transition: .3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 18px #e9b6cb55;
         }
 
         .section {
@@ -140,6 +154,7 @@
         .product:hover {
             transform: translateY(-7px);
             border-color: #d8ad77;
+            box-shadow: 0 8px 22px #b88b5222;
         }
 
         .product-image {
@@ -178,10 +193,12 @@
             border-radius: 7px;
             cursor: pointer;
             font-weight: bold;
+            transition: .3s;
         }
 
         .buy:hover {
             background: #e9b6cb;
+            transform: scale(1.04);
         }
 
         .creator {
@@ -226,6 +243,12 @@
             border-radius: 12px;
             padding: 20px;
             line-height: 2;
+            transition: .3s;
+        }
+
+        .review-card:hover {
+            border-color: #e9b6cb;
+            transform: translateY(-4px);
         }
 
         .review-top {
@@ -252,6 +275,16 @@
             line-height: 2.5;
         }
 
+        footer a {
+            text-decoration: none;
+            font-weight: bold;
+            transition: .3s;
+        }
+
+        footer a:hover {
+            color: #d6b45d !important;
+        }
+
         @media(max-width: 600px) {
             .hero h1 {
                 font-size: 30px;
@@ -259,6 +292,16 @@
 
             header {
                 justify-content: center;
+            }
+
+            nav {
+                justify-content: center;
+                gap: 8px;
+            }
+
+            nav a {
+                font-size: 12px;
+                padding: 9px 11px;
             }
         }
     </style>
@@ -270,8 +313,8 @@
     <div class="logo">🌸 زیبا ارکیده</div>
 
     <nav>
-        <a href="/">صفحه اصلی</a>
-        <a href="#products">محصولات</a>
+        <a href="/">🏠 صفحه اصلی</a>
+        <a href="#products">💄 محصولات</a>
         <a href="{{ url_for('about') }}" class="about-btn">🌸 درباره ما</a>
         <a href="/cart">🛒 سبد خرید ({{ cart_count }})</a>
         <a href="/admin/login" class="admin-btn">🔐 پنل مدیریت</a>
@@ -289,14 +332,14 @@
         </p>
 
         <a href="#products" class="btn">
-            مشاهده محصولات
+            ✨ مشاهده محصولات
         </a>
     </div>
 </section>
 
 <section class="section" id="products">
 
-    <h2 class="section-title">🌸 محصولات ویژه ما</h2>
+    <h2 class="section-title">🌸 محصولات ویژه ما 🌸</h2>
 
     <div class="products">
 
@@ -321,12 +364,12 @@
             </p>
 
             <div class="price">
-                {{ "{:,}".format(product.price) }} تومان
+                💰 {{ "{:,}".format(product.price) }} تومان
             </div>
 
             <form action="/add/{{ product.id }}" method="POST">
                 <button class="buy" type="submit">
-                    افزودن به سبد خرید 🛒
+                    🛒 افزودن به سبد خرید
                 </button>
             </form>
 
@@ -335,7 +378,7 @@
         {% else %}
 
         <p style="text-align:center; color:#ccc;">
-            هنوز محصولی ثبت نشده است.
+            🌸 هنوز محصولی ثبت نشده است.
         </p>
 
         {% endfor %}
@@ -350,7 +393,7 @@
 
 <section class="reviews-section" id="reviews">
 
-    <h2 class="section-title">⭐ نظرات مشتریان</h2>
+    <h2 class="section-title">⭐ نظرات مشتریان ⭐</h2>
 
     <p class="reviews-description">
         تجربه خریداران محصولات زیبا ارکیده
@@ -364,7 +407,7 @@
                 <span>★★★★★</span>
             </div>
             <p>رژ لب کیفیت خیلی خوبی داشت و بسته‌بندی هم عالی بود.</p>
-            <small>محصول: رژ لب</small>
+            <small>💄 محصول: رژ لب</small>
         </div>
 
         <div class="review-card">
@@ -373,7 +416,7 @@
                 <span>★★★★★</span>
             </div>
             <p>عطر خیلی خوشبویی بود. از خریدم راضی هستم.</p>
-            <small>محصول: عطر و ادکلن</small>
+            <small>🌷 محصول: عطر و ادکلن</small>
         </div>
 
         <div class="review-card">
@@ -382,20 +425,20 @@
                 <span>★★★★☆</span>
             </div>
             <p>محصول خوب بود و سفارش به‌خوبی به دستم رسید.</p>
-            <small>محصول: کرم مراقبتی</small>
+            <small>🧴 محصول: کرم مراقبتی</small>
         </div>
 
     </div>
 </section>
 
 <footer>
-    <h2>🌸 زیبا ارکیده</h2>
+    <h2>🌸 زیبا ارکیده 🌸</h2>
     <p>فروشگاه اینترنتی محصولات آرایشی و بهداشتی</p>
-    <p>زیبایی، لطافت و اعتماد</p>
+    <p>✨ زیبایی، لطافت و اعتماد ✨</p>
     <p>تمامی حقوق محفوظ است.</p>
     <p>
         <a href="{{ url_for('about') }}" style="color:#e9b6cb;">
-            درباره ما
+            🌸 درباره ما
         </a>
     </p>
 </footer>
