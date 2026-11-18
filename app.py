@@ -269,6 +269,23 @@ def admin_required(function):
 @app.route("/admin")
 @admin_required
 def admin_panel():
+    # بستن سفارش
+@app.route("/admin/close-order/<int:order_id>", methods=["POST"])
+@admin_required
+def close_order(order_id):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE orders
+        SET status = ?
+        WHERE id = ?
+    """, ("بسته‌شده", order_id))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("admin_panel"))
     conn = get_db()
     cursor = conn.cursor()
 
