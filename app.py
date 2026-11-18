@@ -14,8 +14,12 @@ import psycopg
 from psycopg.rows import dict_row
 
 from flask import (
-    Flask, render_template, redirect,
-    url_for, session, request
+    Flask,
+    render_template,
+    redirect,
+    url_for,
+    session,
+    request
 )
 
 from werkzeug.utils import secure_filename
@@ -33,25 +37,39 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 DB_NAME = "ziba_orchid.db"
 
-# اگر DATABASE_URL تنظیم شده باشد از PostgreSQL استفاده می‌شود
 USE_POSTGRES = bool(DATABASE_URL)
 
 
+# -----------------------------
 # تنظیمات Supabase Storage
+# -----------------------------
+
 SUPABASE_URL = os.environ.get(
     "SUPABASE_URL", ""
-).rstrip("/")
+).strip().rstrip("/")
 
-SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY")
-
-SUPABASE_BUCKET = os.environ.get(
-    "SUPABASE_BUCKET", "product-images"
+SUPABASE_SECRET_KEY = os.environ.get(
+    "SUPABASE_SECRET_KEY"
 )
 
+SUPABASE_BUCKET = os.environ.get(
+    "SUPABASE_BUCKET",
+    "product-images"
+).strip()
 
+
+# -----------------------------
 # تنظیمات آپلود عکس
+# -----------------------------
+
 UPLOAD_FOLDER = os.path.join("static", "uploads")
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+ALLOWED_EXTENSIONS = {
+    "png",
+    "jpg",
+    "jpeg",
+    "webp"
+}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -59,17 +77,26 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 
+# -----------------------------
 # آپلود عکس در Supabase
+# -----------------------------
 
 def upload_image_to_supabase(image, filename):
+
     if not SUPABASE_URL:
-        raise Exception("SUPABASE_URL در تنظیمات Render خالی است.")
+        raise Exception(
+            "متغیر SUPABASE_URL تنظیم نشده است."
+        )
 
     if not SUPABASE_SECRET_KEY:
-        raise Exception("SUPABASE_SECRET_KEY در تنظیمات Render خالی است.")
+        raise Exception(
+            "متغیر SUPABASE_SECRET_KEY تنظیم نشده است."
+        )
 
     if not SUPABASE_BUCKET:
-        raise Exception("SUPABASE_BUCKET در تنظیمات Render خالی است.")
+        raise Exception(
+            "نام Bucket تنظیم نشده است."
+        )
 
     object_path = f"products/{filename}"
 
@@ -80,17 +107,26 @@ def upload_image_to_supabase(image, filename):
         "x-upsert": "true"
     }
 
-    url = (
+    encoded_bucket = quote(
+        SUPABASE_BUCKET,
+        safe=""
+    )
+
+    encoded_path = quote(
+        object_path,
+        safe="/"
+    )
+
+    upload_url = (
         f"{SUPABASE_URL}/storage/v1/object/"
-        f"{quote(SUPABASE_BUCKET, safe='')}/"
-        f"{quote(object_path, safe='/')}"
+        f"{encoded_bucket}/{encoded_path}"
     )
 
     try:
         image_data = image.read()
 
         response = requests.post(
-            url,
+            upload_url,
             data=image_data,
             headers=headers,
             timeout=60
@@ -98,30 +134,37 @@ def upload_image_to_supabase(image, filename):
 
     except requests.RequestException as error:
         raise Exception(
-            f"ارتباط با Supabase برقرار نشد: {str(error)}"
+            f"ارتباط با Supabase ناموفق بود: {str(error)}"
         )
 
     if response.status_code not in (200, 201):
-        error_details = response.text[:1500]
 
         raise Exception(
-            f"Supabase upload error | "
+            f"Supabase upload failed | "
             f"Status: {response.status_code} | "
-            f"Response: {error_details} | "
+            f"Response: {response.text[:1500]} | "
             f"Bucket: {SUPABASE_BUCKET} | "
             f"URL: {SUPABASE_URL}"
         )
 
-    return (
+    public_url = (
         f"{SUPABASE_URL}/storage/v1/object/public/"
-        f"{SUPABASE_BUCKET}/{quote(object_path, safe='/')}"
+        f"{encoded_bucket}/{encoded_path}"
     )
 
+    return public_url
 
+
+# -----------------------------
 # حذف عکس از Supabase
+# -----------------------------
+
 def delete_image_from_supabase(image_url):
+
     if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
-        return
+        raise Exception(
+            "تنظیمات Supabase کامل نیست."
+        )
 
     prefix = (
         f"{SUPABASE_URL}/storage/v1/object/public/"
@@ -131,7 +174,9 @@ def delete_image_from_supabase(image_url):
     if not image_url.startswith(prefix):
         return
 
-    object_path = unquote(image_url[len(prefix):])
+    object_path = unquote(
+        image_url[len(prefix):]
+    )
 
     headers = {
         "apikey": SUPABASE_SECRET_KEY,
@@ -139,22 +184,43 @@ def delete_image_from_supabase(image_url):
         "Content-Type": "application/json"
     }
 
-    response = requests.delete(
-        f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}",
-        json={"prefixes": [object_path]},
-        headers=headers,
-        timeout=30
+    delete_url = (
+        f"{SUPABASE_URL}/storage/v1/object/"
+        f"{quote(SUPABASE_BUCKET, safe='')}"
     )
 
-    if response.status_code not in (200, 204):
+    try:
+        response = requests.delete(
+            delete_url,
+            json={
+                "prefixes": [object_path]
+            },
+            headers=headers,
+            timeout=30
+        )
+
+    except requests.RequestException as error:
         raise Exception(
-            f"حذف عکس ناموفق بود. کد خطا: {response.status_code}"
+            f"ارتباط برای حذف عکس ناموفق بود: {str(error)}"
+        )
+
+    if response.status_code not in (200, 204):
+
+        raise Exception(
+            f"Supabase delete failed | "
+            f"Status: {response.status_code} | "
+            f"Response: {response.text[:1000]}"
         )
 
 
+# -----------------------------
 # اتصال به دیتابیس
+# -----------------------------
+
 def get_db():
+
     if USE_POSTGRES:
+
         return psycopg.connect(
             DATABASE_URL,
             row_factory=dict_row,
@@ -163,26 +229,42 @@ def get_db():
 
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
+
     return conn
 
 
-# اجرای دستور SQL با پشتیبانی از هر دو دیتابیس
+# -----------------------------
+# اجرای دستور SQL
+# -----------------------------
+
 def execute(cursor, query, params=()):
+
     if USE_POSTGRES:
         query = query.replace("?", "%s")
 
-    return cursor.execute(query, params)
+    return cursor.execute(
+        query,
+        params
+    )
 
 
 def executemany(cursor, query, params):
+
     if USE_POSTGRES:
         query = query.replace("?", "%s")
 
-    return cursor.executemany(query, params)
+    return cursor.executemany(
+        query,
+        params
+    )
 
 
+# -----------------------------
 # ساخت جدول‌ها
+# -----------------------------
+
 def init_db():
+
     conn = get_db()
     cursor = conn.cursor()
 
@@ -238,22 +320,55 @@ def init_db():
         )
     """)
 
-    execute(cursor, "SELECT COUNT(*) AS count FROM products")
+    execute(
+        cursor,
+        "SELECT COUNT(*) AS count FROM products"
+    )
+
     count = cursor.fetchone()["count"]
 
     if count == 0:
+
         default_products = [
-            ("رژ لب", 350000, "محصول فروشگاه زیبا ارکیده", "", "💄"),
-            ("کرم مراقبتی", 280000, "محصول فروشگاه زیبا ارکیده", "", "🧴"),
-            ("عطر و ادکلن", 750000, "محصول فروشگاه زیبا ارکیده", "", "🌷"),
-            ("محصولات مراقبت پوست", 420000, "محصول فروشگاه زیبا ارکیده", "", "🧼")
+            (
+                "رژ لب",
+                350000,
+                "محصول فروشگاه زیبا ارکیده",
+                "",
+                "💄"
+            ),
+            (
+                "کرم مراقبتی",
+                280000,
+                "محصول فروشگاه زیبا ارکیده",
+                "",
+                "🧴"
+            ),
+            (
+                "عطر و ادکلن",
+                750000,
+                "محصول فروشگاه زیبا ارکیده",
+                "",
+                "🌷"
+            ),
+            (
+                "محصولات مراقبت پوست",
+                420000,
+                "محصول فروشگاه زیبا ارکیده",
+                "",
+                "🧼"
+            )
         ]
 
-        executemany(cursor, """
+        executemany(
+            cursor,
+            """
             INSERT INTO products
             (name, price, description, image, emoji)
             VALUES (?, ?, ?, ?, ?)
-        """, default_products)
+            """,
+            default_products
+        )
 
     conn.commit()
     conn.close()
@@ -262,56 +377,94 @@ def init_db():
 init_db()
 
 
+# -----------------------------
 # دریافت محصولات
+# -----------------------------
+
 def get_products():
+
     conn = get_db()
     cursor = conn.cursor()
 
-    execute(cursor, """
+    execute(
+        cursor,
+        """
         SELECT * FROM products
         ORDER BY id DESC
-    """)
+        """
+    )
 
     rows = cursor.fetchall()
     conn.close()
 
-    return [dict(row) for row in rows]
+    return [
+        dict(row)
+        for row in rows
+    ]
 
 
-# محاسبه اطلاعات سبد خرید
+# -----------------------------
+# اطلاعات سبد خرید
+# -----------------------------
+
 def get_cart_data():
+
     saved_cart = session.get("cart", {})
+
     cart_items = []
     total = 0
 
     for product in get_products():
-        quantity = saved_cart.get(str(product["id"]), 0)
+
+        quantity = saved_cart.get(
+            str(product["id"]),
+            0
+        )
 
         if quantity > 0:
+
             item = product.copy()
+
             item["quantity"] = quantity
-            item["subtotal"] = quantity * product["price"]
+
+            item["subtotal"] = (
+                quantity * product["price"]
+            )
 
             cart_items.append(item)
+
             total += item["subtotal"]
 
     return cart_items, total
 
 
+# -----------------------------
 # آمار بازدیدکنندگان
+# -----------------------------
+
 def get_visitor_stats():
+
     now = time.time()
 
     conn = get_db()
     cursor = conn.cursor()
 
-    execute(cursor, "SELECT COUNT(*) AS count FROM visitors")
+    execute(
+        cursor,
+        "SELECT COUNT(*) AS count FROM visitors"
+    )
+
     visitor_count = cursor.fetchone()["count"]
 
-    execute(cursor, """
-        SELECT COUNT(*) AS count FROM visitors
+    execute(
+        cursor,
+        """
+        SELECT COUNT(*) AS count
+        FROM visitors
         WHERE last_seen >= ?
-    """, (now - 300,))
+        """,
+        (now - 300,)
+    )
 
     active_count = cursor.fetchone()["count"]
 
@@ -320,16 +473,23 @@ def get_visitor_stats():
     return visitor_count, active_count
 
 
+# -----------------------------
 # صفحه اصلی
+# -----------------------------
+
 @app.route("/")
 def home():
+
     cart = session.get("cart", {})
+
     cart_count = sum(cart.values())
 
     visitor_id = session.get("visitor_id")
 
     if not visitor_id:
+
         visitor_id = uuid.uuid4().hex
+
         session["visitor_id"] = visitor_id
 
     now = time.time()
@@ -337,12 +497,17 @@ def home():
     conn = get_db()
     cursor = conn.cursor()
 
-    execute(cursor, """
-        INSERT INTO visitors (visitor_id, first_seen, last_seen)
+    execute(
+        cursor,
+        """
+        INSERT INTO visitors
+        (visitor_id, first_seen, last_seen)
         VALUES (?, ?, ?)
         ON CONFLICT(visitor_id)
         DO UPDATE SET last_seen = excluded.last_seen
-    """, (visitor_id, now, now))
+        """,
+        (visitor_id, now, now)
+    )
 
     conn.commit()
     conn.close()
@@ -358,9 +523,13 @@ def home():
     )
 
 
-# به‌روزرسانی آمار بازدیدکنندگان
+# -----------------------------
+# به‌روزرسانی بازدیدکنندگان
+# -----------------------------
+
 @app.route("/visitor-heartbeat", methods=["POST"])
 def visitor_heartbeat():
+
     visitor_id = session.get("visitor_id")
 
     if not visitor_id:
@@ -371,11 +540,15 @@ def visitor_heartbeat():
     conn = get_db()
     cursor = conn.cursor()
 
-    execute(cursor, """
+    execute(
+        cursor,
+        """
         UPDATE visitors
         SET last_seen = ?
         WHERE visitor_id = ?
-    """, (now, visitor_id))
+        """,
+        (now, visitor_id)
+    )
 
     conn.commit()
     conn.close()
@@ -388,15 +561,23 @@ def visitor_heartbeat():
     }
 
 
-# صفحه درباره ما
+# -----------------------------
+# درباره ما
+# -----------------------------
+
 @app.route("/about")
 def about():
+
     return render_template("about.html")
 
 
-# افزودن محصول به سبد خرید
+# -----------------------------
+# افزودن به سبد خرید
+# -----------------------------
+
 @app.route("/add/<int:product_id>", methods=["POST"])
 def add_to_cart(product_id):
+
     conn = get_db()
     cursor = conn.cursor()
 
@@ -407,10 +588,13 @@ def add_to_cart(product_id):
     )
 
     product_exists = cursor.fetchone()
+
     conn.close()
 
     if product_exists:
+
         cart = session.get("cart", {})
+
         key = str(product_id)
 
         cart[key] = cart.get(key, 0) + 1
@@ -421,9 +605,13 @@ def add_to_cart(product_id):
     return redirect(url_for("home"))
 
 
+# -----------------------------
 # صفحه سبد خرید
+# -----------------------------
+
 @app.route("/cart")
 def cart():
+
     cart_items, total = get_cart_data()
 
     return render_template(
@@ -433,58 +621,99 @@ def cart():
     )
 
 
+# -----------------------------
 # افزایش و کاهش تعداد
+# -----------------------------
+
 @app.route("/update-cart/<int:product_id>/<action>")
 def update_cart(product_id, action):
+
     cart = session.get("cart", {})
+
     key = str(product_id)
 
     if key in cart:
+
         if action == "increase":
             cart[key] += 1
 
         elif action == "decrease":
+
             cart[key] -= 1
 
             if cart[key] <= 0:
                 del cart[key]
 
     session["cart"] = cart
+
     return redirect(url_for("cart"))
 
 
-# حذف محصول از سبد خرید
+# -----------------------------
+# حذف از سبد خرید
+# -----------------------------
+
 @app.route("/remove/<int:product_id>")
 def remove_product(product_id):
+
     cart = session.get("cart", {})
-    cart.pop(str(product_id), None)
+
+    cart.pop(
+        str(product_id),
+        None
+    )
+
     session["cart"] = cart
 
     return redirect(url_for("cart"))
 
 
-# خالی کردن سبد
+# -----------------------------
+# خالی کردن سبد خرید
+# -----------------------------
+
 @app.route("/clear-cart")
 def clear_cart():
+
     session["cart"] = {}
+
     return redirect(url_for("cart"))
 
 
-# فرم ثبت سفارش
+# -----------------------------
+# ثبت سفارش
+# -----------------------------
+
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
+
     cart_items, total = get_cart_data()
 
     if not cart_items:
         return redirect(url_for("cart"))
 
     if request.method == "POST":
-        platform = request.form.get("platform", "").strip()
-        customer_id = request.form.get("customer_id", "").strip()
-        phone = request.form.get("phone", "").strip()
+
+        platform = request.form.get(
+            "platform",
+            ""
+        ).strip()
+
+        customer_id = request.form.get(
+            "customer_id",
+            ""
+        ).strip()
+
+        phone = request.form.get(
+            "phone",
+            ""
+        ).strip()
 
         allowed_platforms = [
-            "روبیکا", "بله", "واتساپ", "ایتا"
+            "روبیکا",
+            "بله",
+            "واتساپ",
+            "ایتا"
         ]
 
         if platform not in allowed_platforms:
@@ -493,30 +722,55 @@ def checkout():
         if not customer_id or len(customer_id) > 100:
             return "آیدی واردشده معتبر نیست."
 
-        clean_phone = phone.replace(" ", "").replace("-", "")
+        clean_phone = (
+            phone
+            .replace(" ", "")
+            .replace("-", "")
+        )
 
-        if not clean_phone.isdigit() or not 10 <= len(clean_phone) <= 15:
+        if (
+            not clean_phone.isdigit()
+            or not 10 <= len(clean_phone) <= 15
+        ):
             return "شماره تماس معتبر وارد کنید."
 
-        order_code = str(uuid.uuid4())[:8].upper()
+        order_code = str(
+            uuid.uuid4()
+        )[:8].upper()
 
         conn = get_db()
         cursor = conn.cursor()
 
-        execute(cursor, """
+        execute(
+            cursor,
+            """
             INSERT INTO orders
-            (order_code, platform, customer_id, phone,
-             items, total, created_at)
+            (
+                order_code,
+                platform,
+                customer_id,
+                phone,
+                items,
+                total,
+                created_at
+            )
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            order_code,
-            platform,
-            customer_id,
-            clean_phone,
-            json.dumps(cart_items, ensure_ascii=False),
-            total,
-            datetime.now().strftime("%Y-%m-%d %H:%M")
-        ))
+            """,
+            (
+                order_code,
+                platform,
+                customer_id,
+                clean_phone,
+                json.dumps(
+                    cart_items,
+                    ensure_ascii=False
+                ),
+                total,
+                datetime.now().strftime(
+                    "%Y-%m-%d %H:%M"
+                )
+            )
+        )
 
         conn.commit()
         conn.close()
@@ -535,28 +789,48 @@ def checkout():
     )
 
 
+# -----------------------------
 # ورود مدیر
+# -----------------------------
+
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
+
     if request.method == "POST":
-        password = request.form.get("password", "")
+
+        password = request.form.get(
+            "password",
+            ""
+        )
 
         if ADMIN_PASSWORD and password == ADMIN_PASSWORD:
+
             session["is_admin"] = True
-            return redirect(url_for("admin_panel"))
+
+            return redirect(
+                url_for("admin_panel")
+            )
 
         return render_template(
             "admin_login.html",
             error="رمز عبور اشتباه است یا رمز مدیر تنظیم نشده است."
         )
 
-    return render_template("admin_login.html", error="")
+    return render_template(
+        "admin_login.html",
+        error=""
+    )
 
 
+# -----------------------------
 # بررسی دسترسی مدیر
+# -----------------------------
+
 def admin_required(function):
+
     @wraps(function)
     def wrapper(*args, **kwargs):
+
         if not session.get("is_admin"):
             return redirect(url_for("admin_login"))
 
@@ -565,28 +839,40 @@ def admin_required(function):
     return wrapper
 
 
+# -----------------------------
 # پنل مدیریت
+# -----------------------------
+
 @app.route("/admin")
 @admin_required
 def admin_panel():
+
     conn = get_db()
     cursor = conn.cursor()
 
-    execute(cursor, """
+    execute(
+        cursor,
+        """
         SELECT * FROM orders
         ORDER BY id DESC
-    """)
+        """
+    )
 
     rows = cursor.fetchall()
+
     conn.close()
 
     order_list = []
 
     for row in rows:
+
         order = dict(row)
 
         try:
-            order["items"] = json.loads(order["items"])
+            order["items"] = json.loads(
+                order["items"]
+            )
+
         except (json.JSONDecodeError, TypeError):
             order["items"] = []
 
@@ -599,13 +885,31 @@ def admin_panel():
     )
 
 
+# -----------------------------
 # ثبت محصول جدید
-@app.route("/admin/products/add", methods=["POST"])
+# -----------------------------
+
+@app.route(
+    "/admin/products/add",
+    methods=["POST"]
+)
 @admin_required
 def add_product():
-    name = request.form.get("name", "").strip()
-    description = request.form.get("description", "").strip()
-    price_text = request.form.get("price", "").strip()
+
+    name = request.form.get(
+        "name",
+        ""
+    ).strip()
+
+    description = request.form.get(
+        "description",
+        ""
+    ).strip()
+
+    price_text = request.form.get(
+        "price",
+        ""
+    ).strip()
 
     image = request.files.get("image")
 
@@ -618,66 +922,105 @@ def add_product():
     if not image or not image.filename:
         return "لطفاً عکس محصول را انتخاب کنید."
 
-    original_name = secure_filename(image.filename)
+    original_name = secure_filename(
+        image.filename
+    )
 
     if "." not in original_name:
         return "فرمت عکس معتبر نیست."
 
-    extension = original_name.rsplit(".", 1)[1].lower()
+    extension = original_name.rsplit(
+        ".",
+        1
+    )[1].lower()
 
     if extension not in ALLOWED_EXTENSIONS:
         return "فقط عکس‌های JPG، JPEG، PNG و WEBP مجاز هستند."
 
-    filename = f"{uuid.uuid4().hex}.{extension}"
+    filename = (
+        f"{uuid.uuid4().hex}.{extension}"
+    )
 
     # آپلود عکس در Supabase
     try:
-        image_url = upload_image_to_supabase(image, filename)
-    except Exception as error:
-        app.logger.exception("Supabase image upload failed")
-      return (
-    f"خطای آپلود عکس: {str(error)}",
-    500
-)
+
+        image_url = upload_image_to_supabase(
+            image,
+            filename
+        )
+
+    except Exception:
+
+        app.logger.exception(
+            "Supabase image upload failed"
+        )
+
+        return (
+            "آپلود عکس ناموفق بود. لطفاً خطای Render Logs را بررسی کنید.",
+            500
+        )
 
     conn = get_db()
     cursor = conn.cursor()
 
     try:
-        execute(cursor, """
+
+        execute(
+            cursor,
+            """
             INSERT INTO products
             (name, price, description, image, emoji)
             VALUES (?, ?, ?, ?, ?)
-        """, (
-            name,
-            int(price_text),
-            description,
-            image_url,
-            "📦"
-        ))
+            """,
+            (
+                name,
+                int(price_text),
+                description,
+                image_url,
+                "📦"
+            )
+        )
 
         conn.commit()
 
     except Exception:
+
         conn.rollback()
 
         try:
-            delete_image_from_supabase(image_url)
+
+            delete_image_from_supabase(
+                image_url
+            )
+
         except Exception:
-            app.logger.exception("Could not remove uploaded image")
+
+            app.logger.exception(
+                "Could not remove uploaded image"
+            )
 
         raise
 
     finally:
+
         conn.close()
 
-    return redirect(url_for("admin_panel"))
+    return redirect(
+        url_for("admin_panel")
+    )
 
 
+# -----------------------------
 # حذف محصول
-@app.route("/admin/products/delete/<int:product_id>", methods=["POST"])
+# -----------------------------
+
+@app.route(
+    "/admin/products/delete/<int:product_id>",
+    methods=["POST"]
+)
 @admin_required
 def delete_product(product_id):
+
     conn = get_db()
     cursor = conn.cursor()
 
@@ -690,8 +1033,12 @@ def delete_product(product_id):
     product = cursor.fetchone()
 
     if product is None:
+
         conn.close()
-        return redirect(url_for("admin_panel"))
+
+        return redirect(
+            url_for("admin_panel")
+        )
 
     image_name = product["image"]
 
@@ -705,12 +1052,23 @@ def delete_product(product_id):
     conn.close()
 
     if image_name:
+
         if image_name.startswith("http"):
+
             try:
-                delete_image_from_supabase(image_name)
+
+                delete_image_from_supabase(
+                    image_name
+                )
+
             except Exception:
-                app.logger.exception("Supabase image delete failed")
+
+                app.logger.exception(
+                    "Supabase image delete failed"
+                )
+
         else:
+
             image_path = os.path.join(
                 app.config["UPLOAD_FOLDER"],
                 os.path.basename(image_name)
@@ -720,62 +1078,129 @@ def delete_product(product_id):
                 os.remove(image_path)
 
     cart = session.get("cart", {})
-    cart.pop(str(product_id), None)
+
+    cart.pop(
+        str(product_id),
+        None
+    )
+
     session["cart"] = cart
 
-    return redirect(url_for("admin_panel"))
+    return redirect(
+        url_for("admin_panel")
+    )
 
 
+# -----------------------------
 # بستن سفارش
-@app.route("/admin/close-order/<int:order_id>", methods=["POST"])
+# -----------------------------
+
+@app.route(
+    "/admin/close-order/<int:order_id>",
+    methods=["POST"]
+)
 @admin_required
 def close_order(order_id):
+
     conn = get_db()
     cursor = conn.cursor()
 
-    execute(cursor, """
+    execute(
+        cursor,
+        """
         UPDATE orders
         SET status = ?
         WHERE id = ?
-    """, ("بسته‌شده", order_id))
+        """,
+        (
+            "بسته‌شده",
+            order_id
+        )
+    )
 
     conn.commit()
     conn.close()
 
-    return redirect(url_for("admin_panel"))
+    return redirect(
+        url_for("admin_panel")
+    )
 
 
+# -----------------------------
 # خروج مدیر
+# -----------------------------
+
 @app.route("/admin/logout")
 @admin_required
 def admin_logout():
-    session.pop("is_admin", None)
-    return redirect(url_for("admin_login"))
+
+    session.pop(
+        "is_admin",
+        None
+    )
+
+    return redirect(
+        url_for("admin_login")
+    )
 
 
+# -----------------------------
 # پرداخت آزمایشی ناموفق
+# -----------------------------
+
 @app.route("/payment/test-failed")
 def payment_failed():
-    return render_template("payment_failed.html")
+
+    return render_template(
+        "payment_failed.html"
+    )
 
 
+# -----------------------------
 # صفحه پشتیبانی
-@app.route("/support", methods=["GET", "POST"])
+# -----------------------------
+
+@app.route(
+    "/support",
+    methods=["GET", "POST"]
+)
 def support():
+
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        subject = request.form.get("subject", "").strip()
-        message = request.form.get("message", "").strip()
+
+        name = request.form.get(
+            "name",
+            ""
+        ).strip()
+
+        subject = request.form.get(
+            "subject",
+            ""
+        ).strip()
+
+        message = request.form.get(
+            "message",
+            ""
+        ).strip()
 
         if name and subject and message:
+
             conn = get_db()
             cursor = conn.cursor()
 
-            execute(cursor, """
+            execute(
+                cursor,
+                """
                 INSERT INTO support_messages
                 (name, subject, message)
                 VALUES (?, ?, ?)
-            """, (name, subject, message))
+                """,
+                (
+                    name,
+                    subject,
+                    message
+                )
+            )
 
             conn.commit()
             conn.close()
@@ -789,14 +1214,28 @@ def support():
                 </p>
             """
 
-    return render_template("support.html")
+    return render_template(
+        "support.html"
+    )
 
 
-# مدیریت خطای حجم زیاد عکس
+# -----------------------------
+# مدیریت خطای حجم عکس
+# -----------------------------
+
 @app.errorhandler(413)
 def too_large(error):
-    return "حجم عکس نباید بیشتر از ۵ مگابایت باشد.", 413
 
+    return (
+        "حجم عکس نباید بیشتر از ۵ مگابایت باشد.",
+        413
+    )
+
+
+# -----------------------------
+# اجرای برنامه
+# -----------------------------
 
 if __name__ == "__main__":
+
     app.run(debug=True)
