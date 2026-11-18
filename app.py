@@ -320,55 +320,21 @@ def init_db():
         )
     """)
 
+    # محصولات پیش‌فرض به‌صورت خودکار ساخته نمی‌شوند.
+    # محصولات ثبت‌شده توسط مدیر حفظ می‌شوند.
+
     execute(
         cursor,
-        "SELECT COUNT(*) AS count FROM products"
-    )
-
-    count = cursor.fetchone()["count"]
-
-    if count == 0:
-
-        default_products = [
-            (
-                "رژ لب",
-                350000,
-                "محصول فروشگاه زیبا ارکیده",
-                "",
-                "💄"
-            ),
-            (
-                "کرم مراقبتی",
-                280000,
-                "محصول فروشگاه زیبا ارکیده",
-                "",
-                "🧴"
-            ),
-            (
-                "عطر و ادکلن",
-                750000,
-                "محصول فروشگاه زیبا ارکیده",
-                "",
-                "🌷"
-            ),
-            (
-                "محصولات مراقبت پوست",
-                420000,
-                "محصول فروشگاه زیبا ارکیده",
-                "",
-                "🧼"
-            )
-        ]
-
-        executemany(
-            cursor,
-            """
-            INSERT INTO products
-            (name, price, description, image, emoji)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            default_products
+        """
+        DELETE FROM products
+        WHERE name IN (
+            'رژ لب',
+            'کرم مراقبتی',
+            'عطر و ادکلن',
+            'محصولات مراقبت پوست'
         )
+        """
+    )
 
     conn.commit()
     conn.close()
