@@ -22,6 +22,7 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
 DB_NAME = "ziba_orchid.db"
 
+
 # محصولات فروشگاه
 products = [
     {"id": 1, "name": "رژ لب", "price": 350000, "emoji": "💄"},
@@ -186,7 +187,9 @@ def checkout():
         customer_id = request.form.get("customer_id", "").strip()
         phone = request.form.get("phone", "").strip()
 
-        allowed_platforms = ["روبیکا", "بله", "واتساپ", "ایتا"]
+        allowed_platforms = [
+            "روبیکا", "بله", "واتساپ", "ایتا"
+        ]
 
         if platform not in allowed_platforms:
             return "پیام‌رسان انتخاب‌شده معتبر نیست."
@@ -206,7 +209,8 @@ def checkout():
 
         cursor.execute("""
             INSERT INTO orders
-            (order_code, platform, customer_id, phone, items, total, created_at)
+            (order_code, platform, customer_id, phone,
+             items, total, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
             order_code,
@@ -269,7 +273,36 @@ def admin_required(function):
 @app.route("/admin")
 @admin_required
 def admin_panel():
-    # بستن سفارش
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM orders
+        ORDER BY id DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    order_list = []
+
+    for row in rows:
+        order = dict(row)
+
+        try:
+            order["items"] = json.loads(order["items"])
+        except (json.JSONDecodeError, TypeError):
+            order["items"] = []
+
+        order_list.append(order)
+
+    return render_template(
+        "admin.html",
+        orders=order_list
+    )
+
+
+# بستن سفارش
 @app.route("/admin/close-order/<int:order_id>", methods=["POST"])
 @admin_required
 def close_order(order_id):
@@ -286,28 +319,6 @@ def close_order(order_id):
     conn.close()
 
     return redirect(url_for("admin_panel"))
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT * FROM orders
-        ORDER BY id DESC
-    """)
-
-    rows = cursor.fetchall()
-    conn.close()
-
-    order_list = []
-
-    for row in rows:
-        order = dict(row)
-        order["items"] = json.loads(order["items"])
-        order_list.append(order)
-
-    return render_template(
-        "admin.html",
-        orders=order_list
-    )
 
 
 # خروج مدیر

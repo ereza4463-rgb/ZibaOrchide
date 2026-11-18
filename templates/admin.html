@@ -115,6 +115,16 @@
                 <p>
                     <strong>وضعیت:</strong>
                     {{ order.status }}
+                    {% if order.status != "بسته‌شده" %}
+<form action="{{ url_for('close_order', order_id=order.id) }}" method="POST"
+      onsubmit="return confirm('آیا از بستن این سفارش مطمئنی؟');">
+    <button type="submit" class="admin-btn">
+        بستن سفارش
+    </button>
+</form>
+{% else %}
+<p style="color: #d6b45d;">این سفارش بسته شده است ✅</p>
+{% endif %}
                 </p>
 
             </div>
