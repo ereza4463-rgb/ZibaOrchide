@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ثبت سفارش موفق | زیبا ارکیده</title>
+
+    <style>
+        body {
+            background: #100d10;
+            color: white;
+            font-family: Tahoma, sans-serif;
+            text-align: center;
+            padding: 30px 15px;
+        }
+
+        .box {
+            max-width: 500px;
+            margin: 70px auto;
+            padding: 35px 20px;
+            background: #1d181d;
+            border: 1px solid #d6b45d;
+            border-radius: 18px;
+            box-shadow: 0 0 20px #d6b45d22;
+        }
+
+        .success {
+            font-size: 65px;
+            color: #d6b45d;
+        }
+
+        h1 {
+            color: #d6b45d;
+            font-size: 24px;
+        }
+
+        p {
+            line-height: 2;
+        }
+
+        .code {
+            color: #d6b45d;
+            font-size: 25px;
+            direction: ltr;
+            margin: 20px;
+        }
+
+        a {
+            display: inline-block;
+            background: #d6b45d;
+            color: #100d10;
+            padding: 13px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="box">
+
+        <div class="success">✓</div>
+
+        <h1>سفارش شما با موفقیت ثبت شد</h1>
+
+        <p>
+            اطلاعات خرید شما با موفقیت ذخیره شد.
+            از انتخاب فروشگاه زیبا ارکیده سپاسگزاریم.
+        </p>
+
+        <p>شماره سفارش شما:</p>
+
+        <div class="code">{{ order_code }}</div>
+
+        <p>
+            لطفاً شماره سفارش خود را برای پیگیری نگه دارید.
+        </p>
+
+        <a href="/">بازگشت به فروشگاه</a>
+
+    </div>
+
+</body>
+</html>
