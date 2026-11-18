@@ -4,8 +4,12 @@ import json
 import uuid
 import time
 import sqlite3
+
 from datetime import datetime
 from functools import wraps
+
+import psycopg
+from psycopg.rows import dict_row
 
 from flask import (
     Flask, render_template, redirect,
@@ -23,8 +27,13 @@ app.secret_key = os.environ.get(
 )
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 DB_NAME = "ziba_orchid.db"
+
+# اگر DATABASE_URL تنظیم شده باشد از PostgreSQL استفاده می‌شود
+USE_POSTGRES = bool(DATABASE_URL)
+
 
 # تنظیمات آپلود عکس
 UPLOAD_FOLDER = os.path.join("static", "uploads")
@@ -38,9 +47,31 @@ app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 # اتصال به دیتابیس
 def get_db():
+    if USE_POSTGRES:
+        return psycopg.connect(
+            DATABASE_URL,
+            row_factory=dict_row,
+            sslmode="require"
+        )
+
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+# اجرای دستور SQL با پشتیبانی از هر دو دیتابیس
+def execute(cursor, query, params=()):
+    if USE_POSTGRES:
+        query = query.replace("?", "%s")
+
+    return cursor.execute(query, params)
+
+
+def executemany(cursor, query, params):
+    if USE_POSTGRES:
+        query = query.replace("?", "%s")
+
+    return cursor.executemany(query, params)
 
 
 # ساخت جدول‌ها
@@ -48,9 +79,16 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    if USE_POSTGRES:
+        id_type = "BIGSERIAL PRIMARY KEY"
+        visitor_time_type = "DOUBLE PRECISION"
+    else:
+        id_type = "INTEGER PRIMARY KEY AUTOINCREMENT"
+        visitor_time_type = "REAL"
+
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS support_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {id_type},
             name TEXT NOT NULL,
             subject TEXT NOT NULL,
             message TEXT NOT NULL,
@@ -60,9 +98,9 @@ def init_db():
         )
     """)
 
-    cursor.execute("""
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {id_type},
             order_code TEXT UNIQUE NOT NULL,
             platform TEXT NOT NULL,
             customer_id TEXT NOT NULL,
@@ -74,9 +112,9 @@ def init_db():
         )
     """)
 
-    cursor.execute("""
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {id_type},
             name TEXT NOT NULL,
             price INTEGER NOT NULL,
             description TEXT DEFAULT '',
@@ -85,17 +123,16 @@ def init_db():
         )
     """)
 
-    # جدول بازدیدکنندگان
-    cursor.execute("""
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS visitors (
             visitor_id TEXT PRIMARY KEY,
-            first_seen REAL NOT NULL,
-            last_seen REAL NOT NULL
+            first_seen {visitor_time_type} NOT NULL,
+            last_seen {visitor_time_type} NOT NULL
         )
     """)
 
-    cursor.execute("SELECT COUNT(*) FROM products")
-    count = cursor.fetchone()[0]
+    execute(cursor, "SELECT COUNT(*) AS count FROM products")
+    count = cursor.fetchone()["count"]
 
     if count == 0:
         default_products = [
@@ -105,7 +142,7 @@ def init_db():
             ("محصولات مراقبت پوست", 420000, "محصول فروشگاه زیبا ارکیده", "", "🧼")
         ]
 
-        cursor.executemany("""
+        executemany(cursor, """
             INSERT INTO products
             (name, price, description, image, emoji)
             VALUES (?, ?, ?, ?, ?)
@@ -118,12 +155,12 @@ def init_db():
 init_db()
 
 
-# دریافت محصولات از دیتابیس
+# دریافت محصولات
 def get_products():
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    execute(cursor, """
         SELECT * FROM products
         ORDER BY id DESC
     """)
@@ -154,22 +191,22 @@ def get_cart_data():
     return cart_items, total
 
 
-# دریافت آمار بازدیدکنندگان
+# آمار بازدیدکنندگان
 def get_visitor_stats():
     now = time.time()
 
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM visitors")
-    visitor_count = cursor.fetchone()[0]
+    execute(cursor, "SELECT COUNT(*) AS count FROM visitors")
+    visitor_count = cursor.fetchone()["count"]
 
-    cursor.execute("""
-        SELECT COUNT(*) FROM visitors
+    execute(cursor, """
+        SELECT COUNT(*) AS count FROM visitors
         WHERE last_seen >= ?
     """, (now - 300,))
 
-    active_count = cursor.fetchone()[0]
+    active_count = cursor.fetchone()["count"]
 
     conn.close()
 
@@ -193,7 +230,7 @@ def home():
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    execute(cursor, """
         INSERT INTO visitors (visitor_id, first_seen, last_seen)
         VALUES (?, ?, ?)
         ON CONFLICT(visitor_id)
@@ -227,7 +264,7 @@ def visitor_heartbeat():
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    execute(cursor, """
         UPDATE visitors
         SET last_seen = ?
         WHERE visitor_id = ?
@@ -256,7 +293,7 @@ def add_to_cart(product_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute(
+    execute(cursor,
         "SELECT id FROM products WHERE id = ?",
         (product_id,)
     )
@@ -358,7 +395,7 @@ def checkout():
         conn = get_db()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        execute(cursor, """
             INSERT INTO orders
             (order_code, platform, customer_id, phone,
              items, total, created_at)
@@ -427,7 +464,7 @@ def admin_panel():
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    execute(cursor, """
         SELECT * FROM orders
         ORDER BY id DESC
     """)
@@ -454,7 +491,7 @@ def admin_panel():
     )
 
 
-# ثبت محصول جدید همراه با یک عکس
+# ثبت محصول جدید
 @app.route("/admin/products/add", methods=["POST"])
 @admin_required
 def add_product():
@@ -495,7 +532,7 @@ def add_product():
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    execute(cursor, """
         INSERT INTO products
         (name, price, description, image, emoji)
         VALUES (?, ?, ?, ?, ?)
@@ -513,14 +550,14 @@ def add_product():
     return redirect(url_for("admin_panel"))
 
 
-# حذف محصول از فروشگاه
+# حذف محصول
 @app.route("/admin/products/delete/<int:product_id>", methods=["POST"])
 @admin_required
 def delete_product(product_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute(
+    execute(cursor,
         "SELECT image FROM products WHERE id = ?",
         (product_id,)
     )
@@ -533,7 +570,7 @@ def delete_product(product_id):
 
     image_name = product["image"]
 
-    cursor.execute(
+    execute(cursor,
         "DELETE FROM products WHERE id = ?",
         (product_id,)
     )
@@ -564,7 +601,7 @@ def close_order(order_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    execute(cursor, """
         UPDATE orders
         SET status = ?
         WHERE id = ?
@@ -584,7 +621,7 @@ def admin_logout():
     return redirect(url_for("admin_login"))
 
 
-# پرداخت آزمایشی ناموفق قبلی
+# پرداخت آزمایشی ناموفق
 @app.route("/payment/test-failed")
 def payment_failed():
     return render_template("payment_failed.html")
@@ -602,7 +639,7 @@ def support():
             conn = get_db()
             cursor = conn.cursor()
 
-            cursor.execute("""
+            execute(cursor, """
                 INSERT INTO support_messages
                 (name, subject, message)
                 VALUES (?, ?, ?)
