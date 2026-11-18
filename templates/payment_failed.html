@@ -5,56 +5,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>پرداخت ناموفق | زیبا ارکیده</title>
-
     <style>
         body {
             background: #100d10;
             color: white;
-            font-family: Tahoma;
+            font-family: Tahoma, sans-serif;
             text-align: center;
-            padding: 50px 15px;
+            padding: 60px 15px;
         }
-
         .box {
             max-width: 500px;
             margin: auto;
             padding: 35px;
-            background: #211a20;
-            border: 1px solid #e8b94f;
-            border-radius: 20px;
+            background: #1d181d;
+            border: 1px solid #d98da8;
+            border-radius: 18px;
         }
-
-        h1 { color: #e8b94f; }
-
+        h1 { color: #d98da8; }
         a {
             display: inline-block;
-            margin-top: 25px;
-            padding: 13px 25px;
-            background: #e8b94f;
+            background: #e8bd62;
             color: #100d10;
-            border-radius: 10px;
+            padding: 13px 22px;
+            margin: 10px;
+            border-radius: 8px;
             text-decoration: none;
         }
     </style>
 </head>
-
 <body>
+    <div class="box">
+        <h1>پرداخت ناموفق بود!</h1>
+        <h2>🌷 زیبا ارکیده</h2>
+        <p>پرداخت آزمایشی تکمیل نشد.</p>
+        <p>نگران نباشید، می‌توانید دوباره تلاش کنید.</p>
 
-<div class="box">
-
-    <h1>❌ پرداخت ناموفق بود</h1>
-
-    <h2>زیبا ارکیده 🌸</h2>
-
-    <p>شماره سفارش: {{ order.id }}</p>
-
-    <p>وضعیت سفارش: {{ order.status }}</p>
-
-    <p>نگران نباشید؛ سبد خرید شما حفظ شده است.</p>
-
-    <a href="/cart">بازگشت به سبد خرید</a>
-
-</div>
-
+        <a href="/checkout">تلاش دوباره</a>
+        <a href="/cart">بازگشت به سبد خرید</a>
+        <a href="/">صفحه اصلی</a>
+    </div>
 </body>
 </html>

@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>پنل مدیریت | زیبا ارکیده</title>
+
+    <style>
+        body {
+            background: #100d10;
+            color: white;
+            font-family: Tahoma, sans-serif;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            color: #d6b45d;
+        }
+
+        .order {
+            background: #1d181d;
+            border: 1px solid #d6b45d;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .order h2 {
+            color: #d6b45d;
+        }
+
+        .info {
+            line-height: 2.2;
+        }
+
+        .product {
+            background: #292229;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .total {
+            color: #d6b45d;
+            font-size: 20px;
+        }
+
+        a {
+            display: inline-block;
+            padding: 10px 15px;
+            background: #d6b45d;
+            color: #100d10;
+            text-decoration: none;
+            border-radius: 7px;
+        }
+
+        .empty {
+            text-align: center;
+            margin-top: 80px;
+            color: #aaa;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>پنل مدیریت زیبا ارکیده</h1>
+    <a href="/admin/logout">خروج از پنل</a>
+</div>
+
+<hr>
+
+<h2>سفارش‌های ثبت‌شده</h2>
+
+{% if orders %}
+
+    {% for order in orders %}
+
+        <div class="order">
+
+            <h2>سفارش شماره {{ order.order_code }}</h2>
+
+            <div class="info">
+
+                <p>
+                    <strong>پیام‌رسان:</strong>
+                    {{ order.platform }}
+                </p>
+
+                <p>
+                    <strong>آیدی مشتری:</strong>
+                    {{ order.customer_id }}
+                </p>
+
+                <p>
+                    <strong>شماره تماس:</strong>
+                    {{ order.phone }}
+                </p>
+
+                <p>
+                    <strong>تاریخ ثبت:</strong>
+                    {{ order.created_at }}
+                </p>
+
+                <p>
+                    <strong>وضعیت:</strong>
+                    {{ order.status }}
+                </p>
+
+            </div>
+
+            <h3>محصولات سفارش:</h3>
+
+            {% for item in order.items %}
+
+                <div class="product">
+                    {{ item.emoji }}
+                    {{ item.name }}
+                    | تعداد: {{ item.quantity }}
+                    | قیمت: {{ "{:,}".format(item.subtotal) }} تومان
+                </div>
+
+            {% endfor %}
+
+            <h3 class="total">
+                مبلغ نهایی:
+                {{ "{:,}".format(order.total) }} تومان
+            </h3>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="empty">
+        <h2>هنوز سفارشی ثبت نشده است.</h2>
+    </div>
+
+{% endif %}
+
+</body>
+</html>

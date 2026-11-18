@@ -5,110 +5,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>پرداخت | زیبا ارکیده</title>
-
     <style>
-        * { box-sizing: border-box; }
-
         body {
-            margin: 0;
-            padding: 30px 15px;
             background: #100d10;
             color: white;
-            font-family: Tahoma;
+            font-family: Tahoma, sans-serif;
+            padding: 25px;
         }
-
-        .payment-box {
-            max-width: 480px;
-            margin: 40px auto;
-            padding: 30px;
-            background: #211a20;
-            border: 1px solid #e8b94f;
-            border-radius: 20px;
-            text-align: center;
+        .box {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 25px;
+            background: #1d181d;
+            border: 1px solid #e8bd62;
+            border-radius: 15px;
         }
-
-        h1 { color: #e8b94f; }
-
-        .amount {
-            color: #e8b94f;
-            font-size: 27px;
-            font-weight: bold;
-        }
-
-        .info {
-            background: #100d10;
-            padding: 15px;
-            border-radius: 12px;
-            margin: 20px 0;
-            line-height: 2;
-        }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            margin-top: 12px;
-            border: none;
-            border-radius: 10px;
-            background: #e8b94f;
+        h1 { color: #e8bd62; }
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            margin: 10px 5px;
+            background: #e8bd62;
             color: #100d10;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .cancel {
-            background: #49333c;
-            color: white;
-        }
-
-        .notice {
-            color: #ffcf79;
-            font-size: 13px;
-            line-height: 2;
+            text-decoration: none;
+            border-radius: 8px;
         }
     </style>
 </head>
-
 <body>
+<div class="box">
+    <h1>تکمیل خرید زیبا ارکیده</h1>
 
-<div class="payment-box">
+    <h3>محصولات سفارش شما:</h3>
 
-    <h1>🌸 زیبا ارکیده</h1>
-    <h2>درگاه پرداخت آزمایشی</h2>
+    {% for item in cart %}
+        <p>{{ item.name }} - تعداد: {{ item.quantity }}</p>
+        <p>قیمت: {{ "{:,}".format(item.subtotal) }} تومان</p>
+    {% endfor %}
 
-    <div class="info">
-        شماره سفارش:
-        <strong>{{ order.id }}</strong>
-        <br>
+    <hr>
 
-        وضعیت:
-        {{ order.status }}
-    </div>
+    <h2>مبلغ نهایی: {{ "{:,}".format(total) }} تومان</h2>
 
-    <p>مبلغ قابل پرداخت</p>
+    <a class="btn" href="/payment/test-success">
+        پرداخت آزمایشی
+    </a>
 
-    <div class="amount">
-        {{ "{:,}".format(order.amount) }} تومان
-    </div>
+    <a class="btn" href="/payment/test-failed">
+        شبیه‌سازی پرداخت ناموفق
+    </a>
 
-    <p class="notice">
-        این صفحه کاملاً آزمایشی است.
-        هیچ پول واقعی دریافت نمی‌شود.
-    </p>
-
-    <form action="{{ url_for('test_payment_success') }}" method="POST">
-        <button type="submit">
-            تأیید پرداخت آزمایشی
-        </button>
-    </form>
-
-    <form action="{{ url_for('test_payment_failed') }}" method="POST">
-        <button type="submit" class="cancel">
-            شبیه‌سازی پرداخت ناموفق
-        </button>
-    </form>
-
+    <a class="btn" href="/cart">بازگشت به سبد خرید</a>
 </div>
-
 </body>
 </html>

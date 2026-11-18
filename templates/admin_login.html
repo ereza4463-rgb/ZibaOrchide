@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ورود مدیر | زیبا ارکیده</title>
+
+    <style>
+        body {
+            background: #100d10;
+            color: white;
+            font-family: Tahoma, sans-serif;
+            padding: 25px;
+        }
+
+        .box {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background: #1d181d;
+            border: 1px solid #d6b45d;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #d6b45d;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 14px;
+            margin-top: 20px;
+            background: #100d10;
+            color: white;
+            border: 1px solid #d6b45d;
+            border-radius: 8px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            background: #d6b45d;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .error {
+            color: #ff7777;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>پنل مدیریت</h1>
+
+    <p>ورود مدیر زیبا ارکیده</p>
+
+    <form method="POST">
+
+        <input
+            type="password"
+            name="password"
+            placeholder="رمز عبور مدیر"
+            required
+        >
+
+        <button type="submit">ورود به پنل</button>
+
+    </form>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پشتیبانی | زیبا ارکیده</title>
+    <style>
+        body {
+            background: #100d10;
+            color: white;
+            font-family: Tahoma, sans-serif;
+            padding: 30px;
+        }
+        .support-box {
+            max-width: 550px;
+            margin: 40px auto;
+            background: #1d181d;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #e8bd62;
+        }
+        h1 { color: #e8bd62; text-align: center; }
+        input, textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 13px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background: #100d10;
+            color: white;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #e8bd62;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="support-box">
+        <h1>پشتیبانی زیبا ارکیده</h1>
+        <p>سؤال یا مشکل خود را برای ما ارسال کنید.</p>
+
+        <form method="POST">
+            <input type="text" name="name" placeholder="نام شما" required>
+            <input type="text" name="subject" placeholder="موضوع پیام" required>
+            <textarea name="message" rows="6" placeholder="متن پیام شما..." required></textarea>
+            <button type="submit">ارسال پیام</button>
+        </form>
+    </div>
+</body>
+</html>

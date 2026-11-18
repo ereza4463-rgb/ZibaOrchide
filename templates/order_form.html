@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>فرم ثبت خرید | زیبا ارکیده</title>
+    <style>
+        body {
+            background: #100d10;
+            color: white;
+            font-family: Tahoma, sans-serif;
+            padding: 25px;
+        }
+        .container {
+            max-width: 550px;
+            margin: 40px auto;
+            background: #1d181d;
+            padding: 30px;
+            border: 1px solid #d6b45d;
+            border-radius: 15px;
+        }
+        h1 {
+            color: #d6b45d;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 20px;
+        }
+        input, select {
+            width: 100%;
+            padding: 13px;
+            margin-top: 8px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 1px solid #d6b45d;
+            background: #100d10;
+            color: white;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 25px;
+            background: #d6b45d;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .total {
+            color: #d6b45d;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>فرم ثبت خرید</h1>
+
+    <p>لطفاً اطلاعات خود را وارد کنید.</p>
+
+    <form method="POST">
+
+        <label>انتخاب پیام‌رسان</label>
+        <select name="platform" required>
+            <option value="">انتخاب کنید</option>
+            <option value="روبیکا">روبیکا</option>
+            <option value="بله">بله</option>
+            <option value="واتساپ">واتساپ</option>
+            <option value="ایتا">ایتا</option>
+        </select>
+
+        <label>آیدی شما در پیام‌رسان انتخاب‌شده</label>
+        <input
+            type="text"
+            name="customer_id"
+            placeholder="آیدی خود را وارد کنید"
+            maxlength="100"
+            required
+        >
+
+        <label>شماره تماس</label>
+        <input
+            type="tel"
+            name="phone"
+            placeholder="شماره موبایل"
+            maxlength="15"
+            required
+        >
+
+        <h3 class="total">
+            مبلغ نهایی:
+            {{ "{:,}".format(total) }} تومان
+        </h3>
+
+        <button type="submit">ثبت سفارش</button>
+
+    </form>
+
+    <p>
+        <a href="/cart" style="color:#d6b45d">
+            بازگشت به سبد خرید
+        </a>
+    </p>
+
+</div>
+
+</body>
+</html>
