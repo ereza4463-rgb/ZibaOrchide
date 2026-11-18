@@ -65,6 +65,17 @@
             margin: 5px;
         }
 
+        .about-btn {
+            display: inline-block;
+            background: #e9b6cb;
+            color: #100d10;
+            padding: 10px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 5px;
+            font-weight: bold;
+        }
+
         .hero {
             min-height: 480px;
             display: flex;
@@ -261,7 +272,7 @@
     <nav>
         <a href="/">صفحه اصلی</a>
         <a href="#products">محصولات</a>
-        <a href="#about">درباره ما</a>
+        <a href="{{ url_for('about') }}" class="about-btn">🌸 درباره ما</a>
         <a href="/cart">🛒 سبد خرید ({{ cart_count }})</a>
         <a href="/admin/login" class="admin-btn">🔐 پنل مدیریت</a>
     </nav>
@@ -377,11 +388,16 @@
     </div>
 </section>
 
-<footer id="about">
+<footer>
     <h2>🌸 زیبا ارکیده</h2>
     <p>فروشگاه اینترنتی محصولات آرایشی و بهداشتی</p>
     <p>زیبایی، لطافت و اعتماد</p>
     <p>تمامی حقوق محفوظ است.</p>
+    <p>
+        <a href="{{ url_for('about') }}" style="color:#e9b6cb;">
+            درباره ما
+        </a>
+    </p>
 </footer>
 
 </body>

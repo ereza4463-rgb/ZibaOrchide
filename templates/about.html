@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>درباره ما | زیبا ارکیده</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            background: #100d10;
+            color: white;
+            font-family: Tahoma, sans-serif;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #1c181c;
+            border: 1px solid #d6b45d;
+            border-radius: 18px;
+        }
+
+        h1, h2 {
+            color: #d6b45d;
+        }
+
+        p {
+            line-height: 2.2;
+            color: #eee;
+        }
+
+        .section {
+            margin-top: 30px;
+            padding: 15px;
+            background: #252025;
+            border-radius: 12px;
+        }
+
+        a {
+            color: #d6b45d;
+            text-decoration: none;
+        }
+
+        .back {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 25px;
+            background: #d6b45d;
+            color: #100d10;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🌸 درباره فروشگاه زیبا ارکیده 🌸</h1>
+
+        <p>
+            به فروشگاه اینترنتی زیبا ارکیده خوش آمدید.
+            ما تلاش می‌کنیم تجربه‌ای زیبا و آسان برای آشنایی
+            و خرید محصولات آرایشی و مراقبتی فراهم کنیم.
+        </p>
+
+        <div class="section">
+            <h2>🎯 هدف ما</h2>
+            <p>
+                هدف ما ارائه محصولات متنوع و ایجاد تجربه‌ای
+                رضایت‌بخش برای مشتریان است.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>💻 توسعه‌دهنده این سایت</h2>
+            <p>RezaEbrahimi</p>
+        </div>
+
+        <div class="section">
+            <h2>📞 راه‌های ارتباطی با ما</h2>
+            <p>شناسه اپلیکیشن بله:</p>
+            <p><a href="https://ble.ir/Reza_Warlord">@Reza_Warlord</a></p>
+        </div>
+
+        <a href="{{ url_for('home') }}" class="back">
+            بازگشت به صفحه اصلی
+        </a>
+
+    </div>
+
+</body>
+</html>

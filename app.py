@@ -27,7 +27,6 @@ DB_NAME = "ziba_orchid.db"
 
 # تنظیمات آپلود عکس
 UPLOAD_FOLDER = os.path.join("static", "uploads")
-
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -156,6 +155,12 @@ def home():
         products=get_products(),
         cart_count=cart_count
     )
+
+
+# صفحه درباره ما
+@app.route("/about")
+def about():
+    return render_template("about.html")
 
 
 # افزودن محصول به سبد خرید
@@ -425,7 +430,6 @@ def add_product():
 @app.route("/admin/products/delete/<int:product_id>", methods=["POST"])
 @admin_required
 def delete_product(product_id):
-
     conn = get_db()
     cursor = conn.cursor()
 
@@ -450,7 +454,6 @@ def delete_product(product_id):
     conn.commit()
     conn.close()
 
-    # حذف عکس محصول
     if image_name:
         image_path = os.path.join(
             app.config["UPLOAD_FOLDER"],
@@ -460,7 +463,6 @@ def delete_product(product_id):
         if os.path.isfile(image_path):
             os.remove(image_path)
 
-    # پاک کردن محصول حذف‌شده از سبد خرید مدیر
     cart = session.get("cart", {})
     cart.pop(str(product_id), None)
     session["cart"] = cart
