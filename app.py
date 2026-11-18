@@ -74,7 +74,6 @@ def init_db():
         )
     """)
 
-    # جدول محصولات
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,7 +85,6 @@ def init_db():
         )
     """)
 
-    # ثبت محصولات اولیه فقط در صورت خالی بودن جدول
     cursor.execute("SELECT COUNT(*) FROM products")
     count = cursor.fetchone()[0]
 
@@ -218,7 +216,7 @@ def update_cart(product_id, action):
     return redirect(url_for("cart"))
 
 
-# حذف محصول
+# حذف محصول از سبد خرید
 @app.route("/remove/<int:product_id>")
 def remove_product(product_id):
     cart = session.get("cart", {})
@@ -393,7 +391,6 @@ def add_product():
     if extension not in ALLOWED_EXTENSIONS:
         return "فقط عکس‌های JPG، JPEG، PNG و WEBP مجاز هستند."
 
-    # ساخت نام یکتا برای عکس
     filename = f"{uuid.uuid4().hex}.{extension}"
 
     image_path = os.path.join(
@@ -403,7 +400,6 @@ def add_product():
 
     image.save(image_path)
 
-    # ذخیره محصول در دیتابیس
     conn = get_db()
     cursor = conn.cursor()
 
@@ -421,6 +417,53 @@ def add_product():
 
     conn.commit()
     conn.close()
+
+    return redirect(url_for("admin_panel"))
+
+
+# حذف محصول از فروشگاه
+@app.route("/admin/products/delete/<int:product_id>", methods=["POST"])
+@admin_required
+def delete_product(product_id):
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT image FROM products WHERE id = ?",
+        (product_id,)
+    )
+
+    product = cursor.fetchone()
+
+    if product is None:
+        conn.close()
+        return redirect(url_for("admin_panel"))
+
+    image_name = product["image"]
+
+    cursor.execute(
+        "DELETE FROM products WHERE id = ?",
+        (product_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    # حذف عکس محصول
+    if image_name:
+        image_path = os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            os.path.basename(image_name)
+        )
+
+        if os.path.isfile(image_path):
+            os.remove(image_path)
+
+    # پاک کردن محصول حذف‌شده از سبد خرید مدیر
+    cart = session.get("cart", {})
+    cart.pop(str(product_id), None)
+    session["cart"] = cart
 
     return redirect(url_for("admin_panel"))
 

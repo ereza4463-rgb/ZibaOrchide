@@ -5,7 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پنل مدیریت | زیبا ارکیده</title>
-
+.delete-btn {
+    background: #c0394b;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 12px;
+}
     <style>
         body {
             background: #100d10;
@@ -144,7 +152,15 @@
             <h3>{{ product.name }}</h3>
             <p>{{ product.description }}</p>
             <p>{{ "{:,}".format(product.price) }} تومان</p>
+<form action="{{ url_for('delete_product', product_id=product.id) }}"
+      method="POST"
+      onsubmit="return confirm('از حذف این محصول مطمئنی؟');">
 
+    <button type="submit" class="delete-btn">
+        🗑️ حذف محصول
+    </button>
+
+</form>
         </div>
         {% else %}
         <p>هنوز محصولی ثبت نشده است.</p>
