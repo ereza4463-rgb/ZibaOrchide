@@ -85,7 +85,6 @@
             border: 1px solid #e9b6cb;
         }
 
-        /* شمارنده بازدیدکنندگان */
         .visitor-stats {
             display: flex;
             align-items: center;
@@ -378,7 +377,6 @@
         <a href="/">🏠 صفحه اصلی</a>
 
         <div class="visitor-stats">
-
             <div class="stat-box">
                 <span class="stat-title">👁️ مجموع بازدیدکنندگان</span>
                 <span class="stat-number" id="visitor-count">
@@ -395,7 +393,6 @@
                     {{ active_count }}
                 </span>
             </div>
-
         </div>
 
         <a href="#products">💄 محصولات</a>
@@ -434,8 +431,9 @@
             {% if product.image %}
                 <img
                     class="product-image"
-                    src="{{ url_for('static', filename='uploads/' + product.image) }}"
+                    src="{{ product.image if product.image.startswith('http') else url_for('static', filename='uploads/' + product.image) }}"
                     alt="{{ product.name }}"
+                    loading="lazy"
                 >
             {% else %}
                 <div class="emoji">{{ product.emoji }}</div>

@@ -7,7 +7,9 @@ import sqlite3
 
 from datetime import datetime
 from functools import wraps
+from urllib.parse import quote, unquote
 
+import requests
 import psycopg
 from psycopg.rows import dict_row
 
@@ -35,6 +37,18 @@ DB_NAME = "ziba_orchid.db"
 USE_POSTGRES = bool(DATABASE_URL)
 
 
+# تنظیمات Supabase Storage
+SUPABASE_URL = os.environ.get(
+    "SUPABASE_URL", ""
+).rstrip("/")
+
+SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY")
+
+SUPABASE_BUCKET = os.environ.get(
+    "SUPABASE_BUCKET", "product-images"
+)
+
+
 # تنظیمات آپلود عکس
 UPLOAD_FOLDER = os.path.join("static", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
@@ -43,6 +57,77 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+
+
+# آپلود عکس در Supabase
+def upload_image_to_supabase(image, filename):
+    if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
+        raise Exception("تنظیمات Supabase Storage کامل نیست.")
+
+    object_path = f"products/{filename}"
+
+    headers = {
+        "apikey": SUPABASE_SECRET_KEY,
+        "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
+        "Content-Type": image.mimetype or "application/octet-stream",
+        "x-upsert": "true"
+    }
+
+    url = (
+        f"{SUPABASE_URL}/storage/v1/object/"
+        f"{SUPABASE_BUCKET}/{quote(object_path, safe='/')}"
+    )
+
+    response = requests.post(
+        url,
+        data=image.read(),
+        headers=headers,
+        timeout=30
+    )
+
+    if response.status_code not in (200, 201):
+        raise Exception(
+            f"آپلود عکس ناموفق بود. کد خطا: {response.status_code}"
+        )
+
+    return (
+        f"{SUPABASE_URL}/storage/v1/object/public/"
+        f"{SUPABASE_BUCKET}/{quote(object_path, safe='/')}"
+    )
+
+
+# حذف عکس از Supabase
+def delete_image_from_supabase(image_url):
+    if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
+        return
+
+    prefix = (
+        f"{SUPABASE_URL}/storage/v1/object/public/"
+        f"{SUPABASE_BUCKET}/"
+    )
+
+    if not image_url.startswith(prefix):
+        return
+
+    object_path = unquote(image_url[len(prefix):])
+
+    headers = {
+        "apikey": SUPABASE_SECRET_KEY,
+        "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.delete(
+        f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}",
+        json={"prefixes": [object_path]},
+        headers=headers,
+        timeout=30
+    )
+
+    if response.status_code not in (200, 204):
+        raise Exception(
+            f"حذف عکس ناموفق بود. کد خطا: {response.status_code}"
+        )
 
 
 # اتصال به دیتابیس
@@ -293,7 +378,8 @@ def add_to_cart(product_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    execute(cursor,
+    execute(
+        cursor,
         "SELECT id FROM products WHERE id = ?",
         (product_id,)
     )
@@ -522,30 +608,46 @@ def add_product():
 
     filename = f"{uuid.uuid4().hex}.{extension}"
 
-    image_path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        filename
-    )
-
-    image.save(image_path)
+    # آپلود عکس در Supabase
+    try:
+        image_url = upload_image_to_supabase(image, filename)
+    except Exception as error:
+        app.logger.exception("Supabase image upload failed")
+        return (
+            "آپلود عکس ناموفق بود. تنظیمات Supabase و دسترسی Bucket را بررسی کنید.",
+            500
+        )
 
     conn = get_db()
     cursor = conn.cursor()
 
-    execute(cursor, """
-        INSERT INTO products
-        (name, price, description, image, emoji)
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        name,
-        int(price_text),
-        description,
-        filename,
-        "📦"
-    ))
+    try:
+        execute(cursor, """
+            INSERT INTO products
+            (name, price, description, image, emoji)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            name,
+            int(price_text),
+            description,
+            image_url,
+            "📦"
+        ))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+
+    except Exception:
+        conn.rollback()
+
+        try:
+            delete_image_from_supabase(image_url)
+        except Exception:
+            app.logger.exception("Could not remove uploaded image")
+
+        raise
+
+    finally:
+        conn.close()
 
     return redirect(url_for("admin_panel"))
 
@@ -557,7 +659,8 @@ def delete_product(product_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    execute(cursor,
+    execute(
+        cursor,
         "SELECT image FROM products WHERE id = ?",
         (product_id,)
     )
@@ -570,7 +673,8 @@ def delete_product(product_id):
 
     image_name = product["image"]
 
-    execute(cursor,
+    execute(
+        cursor,
         "DELETE FROM products WHERE id = ?",
         (product_id,)
     )
@@ -579,13 +683,19 @@ def delete_product(product_id):
     conn.close()
 
     if image_name:
-        image_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            os.path.basename(image_name)
-        )
+        if image_name.startswith("http"):
+            try:
+                delete_image_from_supabase(image_name)
+            except Exception:
+                app.logger.exception("Supabase image delete failed")
+        else:
+            image_path = os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                os.path.basename(image_name)
+            )
 
-        if os.path.isfile(image_path):
-            os.remove(image_path)
+            if os.path.isfile(image_path):
+                os.remove(image_path)
 
     cart = session.get("cart", {})
     cart.pop(str(product_id), None)

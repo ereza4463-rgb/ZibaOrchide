@@ -7,6 +7,10 @@
     <title>پنل مدیریت | زیبا ارکیده</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             background: #100d10;
             color: white;
@@ -55,6 +59,11 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
+            font-family: Tahoma, sans-serif;
+        }
+
+        button:hover {
+            background: #f0d48b;
         }
 
         .logout {
@@ -87,6 +96,30 @@
 
         .closed {
             color: #d6b45d;
+        }
+
+        .delete-btn {
+            background: #c0394b;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #e74c5e;
+        }
+
+        @media(max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            .box {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 23px;
+            }
         }
     </style>
 </head>
@@ -135,8 +168,11 @@
         <div class="product">
 
             {% if product.image %}
-            <img src="{{ url_for('static', filename='uploads/' + product.image) }}"
-                 alt="{{ product.name }}">
+            <img
+                src="{{ product.image if product.image.startswith('http') else url_for('static', filename='uploads/' + product.image) }}"
+                alt="{{ product.name }}"
+                loading="lazy"
+            >
             {% else %}
             <div style="font-size:40px">{{ product.emoji }}</div>
             {% endif %}
@@ -144,15 +180,17 @@
             <h3>{{ product.name }}</h3>
             <p>{{ product.description }}</p>
             <p>{{ "{:,}".format(product.price) }} تومان</p>
-<form action="{{ url_for('delete_product', product_id=product.id) }}"
-      method="POST"
-      onsubmit="return confirm('از حذف این محصول مطمئنی؟');">
 
-    <button type="submit" class="delete-btn">
-        🗑️ حذف محصول
-    </button>
+            <form action="{{ url_for('delete_product', product_id=product.id) }}"
+                  method="POST"
+                  onsubmit="return confirm('از حذف این محصول مطمئنی؟');">
 
-</form>
+                <button type="submit" class="delete-btn">
+                    🗑️ حذف محصول
+                </button>
+
+            </form>
+
         </div>
         {% else %}
         <p>هنوز محصولی ثبت نشده است.</p>
