@@ -7,7 +7,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>زیبا ارکیده | فروشگاه اینترنتی</title>
-
+.admin-btn {
+    display: inline-block;
+    background: #d6b45d;
+    color: #100d10;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    margin: 5px;
+}
 <style>
 * {
     margin: 0;
@@ -181,6 +189,10 @@ footer {
         <a href="#products">محصولات</a>
         <a href="#about">درباره ما</a>
 <a href="/cart">🛒 سبد خرید ({{ cart_count }})</a>
+
+<a href="/admin/login" class="admin-btn">
+    🔐 پنل مدیریت
+</a>
     </nav>
 
 </header>
